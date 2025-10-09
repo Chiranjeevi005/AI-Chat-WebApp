@@ -17,7 +17,8 @@ app.prepare().then(() => {
   // Initialize Socket.IO
   initSocket(server);
 
-  const port = process.env.PORT || 3000;
+  // Use PORT environment variable or default to 3003
+  const port = process.env.PORT || 3003;
   server.listen(port, (err) => {
     if (err) throw err;
     console.log(`> Ready on http://localhost:${port}`);
