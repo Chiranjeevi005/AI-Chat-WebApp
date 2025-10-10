@@ -9,6 +9,10 @@
     "lint": "eslint"
   },
   "dependencies": {
+    "@next/font": "^14.2.15",
+    "@react-three/drei": "^10.7.6",
+    "@react-three/fiber": "^9.3.0",
+    "framer-motion": "^12.23.23",
     "gsap": "^3.13.0",
     "loginradius-sdk": "^11.7.0",
     "mongoose": "^8.19.1",
@@ -16,7 +20,8 @@
     "react": "19.1.0",
     "react-dom": "19.1.0",
     "socket.io": "^4.8.1",
-    "socket.io-client": "^4.8.1"
+    "socket.io-client": "^4.8.1",
+    "three": "^0.180.0"
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3",
