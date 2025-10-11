@@ -4,6 +4,10 @@ import { useEffect, useRef } from 'react';
 import { gsap } from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
 import Link from 'next/link';
+import dynamic from 'next/dynamic';
+
+// Dynamically import ThreeDLogo to avoid SSR issues
+const ThreeDLogo = dynamic(() => import('./ThreeDLogo'), { ssr: false });
 
 // Register GSAP plugins
 if (typeof window !== 'undefined') {
@@ -60,7 +64,7 @@ export default function Hero() {
         }
       );
 
-      // Animate logo
+      // Animate logo container
       gsap.fromTo(
         logoRef.current,
         { opacity: 0, scale: 0.8 },
@@ -73,7 +77,7 @@ export default function Hero() {
         }
       );
 
-      // Continuous floating animation for logo
+      // Continuous floating animation for logo container
       gsap.to(logoRef.current, {
         y: -20,
         duration: 2,
@@ -118,17 +122,17 @@ export default function Hero() {
           <div className="flex-1 text-center lg:text-left hero-text">
             <h1 
               ref={titleRef}
-              className="text-4xl md:text-6xl lg:text-7xl font-bold mb-6 leading-tight hero-title"
+              className="text-4xl md:text-5xl lg:text-6xl font-bold mb-6 leading-tight hero-title"
             >
-              <span className="block gradient-text">Chat Beyond Time</span>
-              <span className="block text-white mt-2">Real-time, Limitless, Human</span>
+              <span className="block gradient-text">Where Human Imagination</span>
+              <span className="block gradient-text">Meets AI Conversation</span>
             </h1>
             
             <p 
               ref={subtitleRef}
-              className="text-xl md:text-2xl text-gray-300 mb-10 max-w-2xl hero-subtitle"
+              className="text-xl md:text-2xl text-gray-300 mb-10 max-w-3xl hero-subtitle"
             >
-              Experience the future of communication with our AI-powered platform featuring real-time messaging, 3D interfaces, and cutting-edge design.
+              Step into a new era of communication — a real-time chat experience powered by intelligent AI, crafted for teams that design, build, and innovate together.
             </p>
             
             <div 
@@ -139,49 +143,26 @@ export default function Hero() {
                 href="/chat" 
                 className="cta-button px-8 py-4 bg-gradient-to-r from-cyan-500 to-blue-500 text-white font-semibold rounded-full hover:from-cyan-600 hover:to-blue-600 transition-all duration-300 transform hover:scale-105 glow-cyan shadow-lg"
               >
-                Try Demo
+                Start Chatting Now
               </Link>
               <Link 
-                href="#features" 
+                href="#demo" 
                 className="cta-button px-8 py-4 bg-transparent border-2 border-violet-500 text-violet-300 font-semibold rounded-full hover:bg-violet-500 hover:text-white transition-all duration-300 transform hover:scale-105 glow-violet"
               >
-                Explore Features
+                Watch Demo
               </Link>
             </div>
           </div>
           
-          {/* 3D Logo */}
+          {/* Enhanced 3D Logo */}
           <div 
             ref={logoRef}
             className="flex-1 flex justify-center"
           >
-            <div className="relative w-64 h-64 md:w-80 md:h-80">
-              {/* Outer ring */}
-              <div className="absolute inset-0 rounded-full border-2 border-cyan-400 opacity-30 animate-spin-slow"></div>
-              
-              {/* Middle ring */}
-              <div className="absolute inset-4 rounded-full border-2 border-violet-400 opacity-50 animate-spin-reverse"></div>
-              
-              {/* Inner core */}
-              <div className="absolute inset-8 rounded-full bg-gradient-to-br from-cyan-400 to-violet-600 opacity-80 flex items-center justify-center">
-                <div className="w-16 h-16 md:w-24 md:h-24 rounded-full bg-black bg-opacity-30 flex items-center justify-center">
-                  <div className="w-8 h-8 md:w-12 md:h-12 rounded-full bg-gradient-to-br from-cyan-300 to-violet-400 animate-pulse"></div>
-                </div>
-              </div>
-              
-              {/* Floating particles */}
-              <div className="absolute top-0 left-1/2 w-3 h-3 bg-cyan-400 rounded-full animate-float"></div>
-              <div className="absolute top-1/3 right-0 w-2 h-2 bg-violet-400 rounded-full animate-float-delay"></div>
-              <div className="absolute bottom-1/4 left-1/4 w-2 h-2 bg-purple-400 rounded-full animate-float-delay-2"></div>
+            <div className="relative w-80 h-80 md:w-96 md:h-96 rounded-full overflow-hidden">
+              <ThreeDLogo size={384} />
             </div>
           </div>
-        </div>
-      </div>
-      
-      {/* Scroll indicator */}
-      <div className="absolute bottom-8 left-1/2 transform -translate-x-1/2 animate-bounce">
-        <div className="w-8 h-12 rounded-full border-2 border-cyan-400 flex justify-center">
-          <div className="w-1 h-3 bg-cyan-400 rounded-full mt-2 animate-scroll"></div>
         </div>
       </div>
     </section>

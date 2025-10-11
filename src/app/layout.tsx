@@ -25,6 +25,9 @@ const poppins = Poppins({
 export const metadata: Metadata = {
   title: "AI Chat - Futuristic Real-time Communication",
   description: "Experience the future of communication with our AI-powered chat platform featuring real-time messaging, 3D interfaces, and cutting-edge design.",
+  icons: {
+    icon: '/favicon.ico',
+  },
 };
 
 export default function RootLayout({
