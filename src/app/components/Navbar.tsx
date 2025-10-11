@@ -37,30 +37,30 @@ export default function Navbar() {
   return (
     <nav 
       className={`fixed w-full z-50 transition-all duration-300 ${
-        scrolled ? 'py-3 bg-gradient-to-r from-gray-900/90 via-gray-900/80 to-gray-900/90 backdrop-blur-md border-b border-orange-500/20' : 'py-6 bg-transparent'
+        scrolled ? 'py-1.5 bg-gradient-to-r from-gray-900/90 via-gray-900/80 to-gray-900/90 backdrop-blur-md border-b border-cyan-500/20' : 'py-3 bg-transparent'
       }`}
     >
-      <div className="container mx-auto px-4">
+      <div className="container mx-auto px-4 max-w-6xl">
         <div className="flex justify-between items-center">
           {/* Logo */}
           <div className="navbar-item flex items-center">
-            <div className="w-16 h-16 rounded-full mr-3">
-              <Image src="/assets/logo.png" alt="AI Chat Logo" width={64} height={64} className="rounded-full" />
+            <div className="w-10 h-10 rounded-full mr-2">
+              <Image src="/assets/logo.png" alt="AI Chat Logo" width={40} height={40} className="rounded-full" />
             </div>
-            <span className="text-3xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-orange-400 to-cyan-400">AI Chat</span>
+            <span className="text-xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-purple-500">AI Chat</span>
           </div>
 
           {/* Desktop Navigation - removed all items as requested */}
-          <div className="navbar-item hidden md:flex space-x-10">
+          <div className="navbar-item hidden md:flex space-x-8">
             {/* Navigation items removed as per request */}
           </div>
 
-          {/* Auth Buttons - removed Sign In, keeping Get Started */}
-          <div className="navbar-item hidden md:flex space-x-4">
+          {/* Auth Buttons - removed Sign In, keeping Get Started with theme colors */}
+          <div className="navbar-item hidden md:flex space-x-3">
             {/* Sign In removed as per request */}
             <Link
               href="/signup"
-              className="px-7 py-3 bg-gradient-to-r from-orange-500 to-cyan-500 text-white font-bold rounded-full hover:from-orange-600 hover:to-cyan-600 transition-all duration-300 transform hover:scale-105 glow-orange shadow-lg"
+              className="px-5 py-1.5 bg-gradient-to-r from-cyan-600 to-purple-600 text-white font-bold rounded-full hover:from-cyan-700 hover:to-purple-700 transition-all duration-300 transform hover:scale-105 shadow-lg text-sm"
             >
               Get Started
             </Link>
@@ -70,14 +70,14 @@ export default function Navbar() {
           <div className="navbar-item md:hidden">
             <button
               onClick={() => setIsMenuOpen(!isMenuOpen)}
-              className="text-orange-300 hover:text-cyan-100 focus:outline-none"
+              className="text-cyan-300 hover:text-purple-100 focus:outline-none"
             >
               {isMenuOpen ? (
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
                 </svg>
               ) : (
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
                 </svg>
               )}
@@ -87,14 +87,14 @@ export default function Navbar() {
 
         {/* Mobile Menu - removed all items as requested */}
         {isMenuOpen && (
-          <div className="md:hidden mt-4 py-4 border-t border-orange-500/20">
-            <div className="flex flex-col space-y-4">
+          <div className="md:hidden mt-2 py-2 border-t border-cyan-500/20">
+            <div className="flex flex-col space-y-2">
               {/* Navigation items removed as per request */}
-              <div className="flex flex-col space-y-3 pt-4 border-t border-orange-500/10">
+              <div className="flex flex-col space-y-2 pt-2 border-t border-cyan-500/10">
                 {/* Sign In removed as per request */}
                 <Link
                   href="/signup"
-                  className="px-6 py-3 bg-gradient-to-r from-orange-500 to-cyan-500 text-white font-bold rounded-full hover:from-orange-600 hover:to-cyan-600 transition-all duration-300 glow-orange text-center shadow-lg"
+                  className="px-4 py-1.5 bg-gradient-to-r from-cyan-600 to-purple-600 text-white font-bold rounded-full hover:from-cyan-700 hover:to-purple-700 transition-all duration-300 text-center shadow-lg text-sm"
                   onClick={() => setIsMenuOpen(false)}
                 >
                   Get Started

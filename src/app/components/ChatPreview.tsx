@@ -4,6 +4,12 @@ import { useEffect, useRef, useState } from 'react';
 import { gsap } from 'gsap';
 import { generateMessage } from '@/utils/generateMessage';
 
+// Simple unique ID generator
+let messageIdCounter = 0;
+const generateUniqueId = () => {
+  return `${Date.now()}-${++messageIdCounter}`;
+};
+
 export default function ChatPreview() {
   const messagesContainerRef = useRef<HTMLDivElement>(null);
   const [messages, setMessages] = useState<any[]>([]);
@@ -25,7 +31,7 @@ export default function ChatPreview() {
     for (let i = 0; i < 5; i++) {
       const msg = generateMessage();
       initialMessages.push({
-        id: Date.now() + i,
+        id: generateUniqueId(),
         user: msg.sender,
         text: msg.text,
         time: new Date(Date.now() + i * 1000).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
@@ -45,7 +51,7 @@ export default function ChatPreview() {
       // Add new message after a delay to simulate typing
       setTimeout(() => {
         const messageToAdd = {
-          id: Date.now(),
+          id: generateUniqueId(),
           user: nextMsg.sender,
           text: nextMsg.text,
           time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),

@@ -42,7 +42,7 @@ export default function RootLayout({
     >
       <body className="font-sans">
         <Navbar />
-        <main className="pt-24">
+        <main className="pt-20">
           {children}
         </main>
       </body>
