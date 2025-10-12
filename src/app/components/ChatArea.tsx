@@ -2,6 +2,30 @@
 
 import { useState, useRef, useEffect } from 'react';
 import { gsap } from 'gsap';
+import { getSocket } from '@/utils/socket';
+
+// Define types for our data
+interface Message {
+  id: number;
+  user: string;
+  text: string;
+  time: string;
+  self: boolean;
+  isAI?: boolean;
+}
+
+interface AIState {
+  listening: boolean;
+  analyzing: boolean;
+  context: string;
+  participants: string[];
+}
+
+interface TeamMember {
+  name: string;
+  avatar: string;
+  color: string;
+}
 
 export default function ChatArea({ 
   messages, 
@@ -10,19 +34,22 @@ export default function ChatArea({
   sidebarOpen,
   setSidebarOpen
 }: { 
-  messages: any[]; 
-  addMessage: (message: any) => void;
-  aiState: any;
+  messages: Message[]; 
+  addMessage: (message: Message) => void;
+  aiState: AIState;
   sidebarOpen: boolean;
   setSidebarOpen: (open: boolean) => void;
 }) {
   const [newMessage, setNewMessage] = useState('');
-  const [typing, setTyping] = useState(false);
+  const [typingUsers, setTypingUsers] = useState<string[]>([]);
   const [currentSpeaker, setCurrentSpeaker] = useState('');
   const chatContainerRef = useRef<HTMLDivElement>(null);
-  
+  const typingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const socket = getSocket();
+  const messagesEndRef = useRef<HTMLDivElement>(null);
+
   // Pool of realistic team members
-  const teamMembers = [
+  const teamMembers: TeamMember[] = [
     { name: 'Alex Morgan', avatar: 'AM', color: 'from-cyan-500 to-blue-500' },
     { name: 'Sam Rivera', avatar: 'SR', color: 'from-violet-500 to-purple-500' },
     { name: 'Jordan Lee', avatar: 'JL', color: 'from-pink-500 to-rose-500' },
@@ -65,49 +92,47 @@ export default function ChatArea({
   
   useEffect(() => {
     // Scroll to bottom when messages change
-    if (chatContainerRef.current) {
-      setTimeout(() => {
-        chatContainerRef.current!.scrollTop = chatContainerRef.current!.scrollHeight;
-      }, 100);
+    if (messagesEndRef.current) {
+      gsap.to(messagesEndRef.current, {
+        duration: 0.5,
+        scrollTo: {
+          y: messagesEndRef.current.scrollHeight,
+          autoKill: false
+        },
+        ease: 'power2.out'
+      });
     }
   }, [messages]);
   
   useEffect(() => {
-    // Simulate AI messages
-    const aiMessages = [
-      { 
-        id: Date.now() + 100, 
-        user: 'AI Assistant', 
-        text: 'AI: I noticed you’ve been discussing color consistency a lot. Would you like a summary?', 
-        time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-        self: false,
-        isAI: true
-      },
-      { 
-        id: Date.now() + 200, 
-        user: 'AI Assistant', 
-        text: 'AI: Here’s a condensed version of this conversation so far.', 
-        time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-        self: false,
-        isAI: true
+    // Animate new messages
+    if (chatContainerRef.current) {
+      const messageElements = chatContainerRef.current.querySelectorAll('.message-bubble');
+      if (messageElements.length > 0) {
+        const lastMessage = messageElements[messageElements.length - 1];
+        gsap.fromTo(lastMessage,
+          { opacity: 0, y: 20 },
+          { opacity: 1, y: 0, duration: 0.3, ease: 'back.out(1.7)' }
+        );
       }
-    ];
-    
-    // Add AI messages with delay
-    const aiTimer1 = setTimeout(() => {
-      addMessage(aiMessages[0]);
-    }, 5000);
-    
-    const aiTimer2 = setTimeout(() => {
-      addMessage(aiMessages[1]);
-    }, 10000);
-    
-    return () => {
-      clearTimeout(aiTimer1);
-      clearTimeout(aiTimer2);
-    };
-  }, [addMessage]);
+    }
+  }, [messages]);
   
+  useEffect(() => {
+    // Listen for typing indicators
+    socket.on('typing', (data: { username: string; isTyping: boolean }) => {
+      if (data.isTyping) {
+        setTypingUsers(prev => [...new Set([...prev, data.username])]);
+      } else {
+        setTypingUsers(prev => prev.filter(user => user !== data.username));
+      }
+    });
+
+    return () => {
+      socket.off('typing');
+    };
+  }, []);
+
   const toggleSidebar = () => {
     setSidebarOpen(!sidebarOpen);
   };
@@ -115,7 +140,7 @@ export default function ChatArea({
   const handleSendMessage = () => {
     if (newMessage.trim() === '') return;
     
-    const message = {
+    const message: Message = {
       id: Date.now() + Math.floor(Math.random() * 10000),
       user: 'You',
       text: newMessage,
@@ -125,6 +150,9 @@ export default function ChatArea({
     
     addMessage(message);
     setNewMessage('');
+    
+    // Stop typing indicator
+    socket.emit('typing', { room: 'General', isTyping: false });
   };
   
   const handleKeyPress = (e: React.KeyboardEvent) => {
@@ -134,8 +162,24 @@ export default function ChatArea({
     }
   };
   
+  const handleInputChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    setNewMessage(e.target.value);
+    
+    // Send typing indicator
+    socket.emit('typing', { room: 'General', isTyping: true });
+    
+    // Clear typing indicator after 1 second of inactivity
+    if (typingTimeoutRef.current) {
+      clearTimeout(typingTimeoutRef.current);
+    }
+    
+    typingTimeoutRef.current = setTimeout(() => {
+      socket.emit('typing', { room: 'General', isTyping: false });
+    }, 1000);
+  };
+  
   return (
-    <div className="flex-1 flex flex-col">
+    <div className="flex-1 flex flex-col chat-area">
       {/* Chat Header */}
       <div className="bg-gray-800 bg-opacity-50 glass p-4 border-b border-gray-700 flex items-center chat-header">
         <button 
@@ -154,13 +198,15 @@ export default function ChatArea({
           {aiState.listening && (
             <div className="flex items-center text-xs text-cyan-400">
               <div className="w-2 h-2 rounded-full bg-cyan-400 animate-pulse mr-1"></div>
-              AI is listening...
+              <span className="hidden sm:inline">AI is listening...</span>
+              <span className="sm:hidden">AI</span>
             </div>
           )}
           {aiState.analyzing && (
             <div className="flex items-center text-xs text-purple-400 ml-3">
               <div className="w-2 h-2 rounded-full bg-purple-400 animate-pulse mr-1"></div>
-              AI analyzing context...
+              <span className="hidden sm:inline">AI analyzing...</span>
+              <span className="sm:hidden">AI</span>
             </div>
           )}
         </div>
@@ -183,15 +229,15 @@ export default function ChatArea({
       {/* Messages Container */}
       <div 
         ref={chatContainerRef}
-        className="flex-1 overflow-y-auto p-6 bg-gradient-to-b from-gray-900 to-gray-800"
+        className="flex-1 overflow-y-auto p-4 sm:p-6 bg-gradient-to-b from-gray-900 to-gray-800 relative"
       >
         {messages.map((message) => (
           <div 
             key={message.id}
-            className={`mb-6 flex ${message.self ? 'justify-end' : 'justify-start'}`}
+            className={`mb-4 sm:mb-6 flex ${message.self ? 'justify-end' : 'justify-start'}`}
           >
             <div 
-              className={`max-w-xs md:max-w-md px-5 py-3 rounded-2xl message-bubble ${
+              className={`max-w-xs sm:max-w-md px-4 py-2 sm:px-5 sm:py-3 rounded-2xl message-bubble ${
                 message.isAI 
                   ? 'bg-gradient-to-r from-purple-700 to-violet-700 text-white rounded-br-none glow-violet' 
                   : message.self 
@@ -204,7 +250,7 @@ export default function ChatArea({
                   {message.user} {message.isAI && '🤖'}
                 </div>
               )}
-              <div className="mb-1">{message.text}</div>
+              <div className="mb-1 text-sm sm:text-base">{message.text}</div>
               <div 
                 className={`text-xs ${
                   message.isAI ? 'text-violet-200' : message.self ? 'text-cyan-200' : 'text-violet-200'
@@ -217,10 +263,12 @@ export default function ChatArea({
         ))}
         
         {/* Typing indicator */}
-        {typing && (
-          <div className="flex justify-start mb-6">
-            <div className="bg-gray-700 text-white rounded-2xl rounded-bl-none px-5 py-3">
-              <div className="font-semibold text-sm mb-1 text-cyan-300">{currentSpeaker}</div>
+        {typingUsers.length > 0 && (
+          <div className="flex justify-start mb-4 sm:mb-6">
+            <div className="bg-gray-700 text-white rounded-2xl rounded-bl-none px-4 py-2 sm:px-5 sm:py-3">
+              <div className="font-semibold text-sm mb-1 text-cyan-300">
+                {typingUsers.join(', ')}
+              </div>
               <div className="flex items-center">
                 <div className="w-2 h-2 bg-gray-300 rounded-full mr-1 animate-bounce"></div>
                 <div className="w-2 h-2 bg-gray-300 rounded-full mr-1 animate-bounce" style={{ animationDelay: '0.2s' }}></div>
@@ -229,19 +277,21 @@ export default function ChatArea({
             </div>
           </div>
         )}
+        
+        <div ref={messagesEndRef} />
       </div>
       
       {/* Input Area */}
-      <div className="bg-gray-800 bg-opacity-50 glass p-4 border-t border-gray-700">
+      <div className="bg-gray-800 bg-opacity-50 glass p-3 sm:p-4 border-t border-gray-700 message-input">
         <div className="flex">
-          <div className="flex items-center mr-3">
-            <button className="text-gray-400 hover:text-white p-2 rounded-full hover:bg-gray-700">
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <div className="flex items-center mr-2 sm:mr-3">
+            <button className="text-gray-400 hover:text-white p-1 sm:p-2 rounded-full hover:bg-gray-700">
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 sm:h-5 sm:w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13" />
               </svg>
             </button>
-            <button className="text-gray-400 hover:text-white p-2 rounded-full hover:bg-gray-700">
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <button className="text-gray-400 hover:text-white p-1 sm:p-2 rounded-full hover:bg-gray-700">
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 sm:h-5 sm:w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14.828 14.828a4 4 0 01-5.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
               </svg>
             </button>
@@ -249,22 +299,22 @@ export default function ChatArea({
           <div className="flex-1 relative">
             <textarea
               value={newMessage}
-              onChange={(e) => setNewMessage(e.target.value)}
+              onChange={handleInputChange}
               onKeyDown={handleKeyPress}
               placeholder="Type a message..."
-              className="w-full bg-gray-700 text-white rounded-2xl px-4 py-3 pr-12 focus:outline-none focus:ring-2 focus:ring-cyan-500 resize-none"
+              className="w-full bg-gray-700 text-white rounded-2xl px-3 py-2 sm:px-4 sm:py-3 pr-10 sm:pr-12 focus:outline-none focus:ring-2 focus:ring-cyan-500 resize-none text-sm sm:text-base"
               rows={1}
             />
             <button 
               onClick={handleSendMessage}
               disabled={!newMessage.trim()}
-              className={`absolute right-3 top-1/2 transform -translate-y-1/2 p-1 rounded-full ${
+              className={`absolute right-2 sm:right-3 top-1/2 transform -translate-y-1/2 p-1 rounded-full ${
                 newMessage.trim() 
                   ? 'text-cyan-400 hover:bg-cyan-500 hover:text-white glow-cyan' 
                   : 'text-gray-500'
               }`}
             >
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 sm:h-6 sm:w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
               </svg>
             </button>

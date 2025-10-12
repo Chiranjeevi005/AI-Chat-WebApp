@@ -1,12 +1,55 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import AIPanelSession from '@/app/components/AIPanelSession';
+import { getSocket } from '@/utils/socket';
+import LoginModal from '@/app/components/LoginModal';
+import RoomSidebar from '@/app/components/RoomSidebar';
+import ChatArea from '@/app/components/ChatArea';
+import AIAssistantPanel from '@/app/components/AIAssistantPanel';
 import Image from 'next/image';
+
+interface Message {
+  id: number;
+  user: string;
+  text: string;
+  time: string;
+  self: boolean;
+  isAI?: boolean;
+}
+
+interface AIState {
+  listening: boolean;
+  analyzing: boolean;
+  context: string;
+  participants: string[];
+}
+
+interface RoomData {
+  room: string;
+  users: string[];
+  messages: Message[];
+}
+
+interface UserData {
+  username: string;
+}
 
 export default function ChatSessionPage() {
   const [isLoading, setIsLoading] = useState(true);
-  
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [username, setUsername] = useState('');
+  const [room, setRoom] = useState('');
+  const [rooms, setRooms] = useState<string[]>(['General']);
+  const [messages, setMessages] = useState<Message[]>([]);
+  const [aiState, setAiState] = useState<AIState>({
+    listening: false,
+    analyzing: false,
+    context: 'Product brainstorming',
+    participants: ['You', 'AI Assistant']
+  });
+  const [sidebarOpen, setSidebarOpen] = useState(true);
+  const socket = getSocket();
+
   useEffect(() => {
     // Simulate loading AI environment
     const timer = setTimeout(() => {
@@ -15,7 +58,71 @@ export default function ChatSessionPage() {
     
     return () => clearTimeout(timer);
   }, []);
-  
+
+  useEffect(() => {
+    // Listen for room updates
+    socket.on('roomsUpdate', (updatedRooms: string[]) => {
+      setRooms(updatedRooms);
+    });
+
+    // Clean up socket listeners
+    return () => {
+      socket.off('roomsUpdate');
+    };
+  }, [socket]);
+
+  const handleLogin = (user: string, selectedRoom: string) => {
+    setUsername(user);
+    setRoom(selectedRoom);
+    setIsLoggedIn(true);
+
+    // Join the room
+    socket.emit('join', { username: user, room: selectedRoom });
+
+    // Listen for room data
+    socket.on('roomData', (data: RoomData) => {
+      setMessages(data.messages);
+      setAiState(prev => ({
+        ...prev,
+        participants: data.users
+      }));
+    });
+
+    // Listen for new messages
+    socket.on('message', (message: Message) => {
+      setMessages(prev => [...prev, { ...message, self: message.user === user }]);
+    });
+
+    // Listen for user joined
+    socket.on('userJoined', (data: UserData) => {
+      setAiState(prev => ({
+        ...prev,
+        participants: [...prev.participants, data.username]
+      }));
+    });
+
+    // Listen for user left
+    socket.on('userLeft', (data: UserData) => {
+      setAiState(prev => ({
+        ...prev,
+        participants: prev.participants.filter(p => p !== data.username)
+      }));
+    });
+  };
+
+  const addMessage = (message: Message) => {
+    // For user messages, send to server
+    if (message.self && !message.isAI) {
+      socket.emit('sendMessage', { room, message: message.text });
+    }
+    // For AI messages, just add to local state
+    setMessages(prev => [...prev, message]);
+  };
+
+  const updateAI = (newState: Partial<AIState>) => {
+    setAiState(prev => ({ ...prev, ...newState }));
+  };
+
   if (isLoading) {
     return (
       <div className="min-h-screen w-full flex items-center justify-center bg-gradient-to-br from-gray-900 to-black">
@@ -46,10 +153,39 @@ export default function ChatSessionPage() {
       </div>
     );
   }
-  
+
+  if (!isLoggedIn) {
+    return <LoginModal onLogin={handleLogin} rooms={rooms} />;
+  }
+
   return (
-    <div className="h-screen bg-gradient-to-br from-gray-900 to-black">
-      <AIPanelSession />
+    <div className="h-screen bg-gradient-to-br from-gray-900 to-black flex">
+      {/* Room Sidebar */}
+      <RoomSidebar 
+        sidebarOpen={sidebarOpen} 
+        setSidebarOpen={setSidebarOpen}
+        sessionId={`session-${Date.now()}`} // Temporary sessionId for compatibility
+      />
+      
+      {/* Main Chat Area */}
+      <div className="flex-1 flex">
+        <ChatArea 
+          messages={messages}
+          addMessage={addMessage}
+          aiState={aiState}
+          sidebarOpen={sidebarOpen}
+          setSidebarOpen={setSidebarOpen}
+        />
+        
+        {/* AI Assistant Panel */}
+        <div className="w-96 border-l border-gray-700">
+          <AIAssistantPanel 
+            messages={messages}
+            aiState={aiState}
+            updateAI={updateAI}
+          />
+        </div>
+      </div>
     </div>
   );
 }

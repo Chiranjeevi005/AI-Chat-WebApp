@@ -12,6 +12,7 @@ export default function Home() {
   const contentRef = useRef<HTMLDivElement>(null);
   const buttonRef = useRef<HTMLButtonElement>(null);
   const particlesRef = useRef<HTMLDivElement>(null);
+  const logoRef = useRef<HTMLDivElement>(null);
 
   // Deterministic particle positions to avoid hydration errors
   const particlePositions = [
@@ -158,6 +159,16 @@ export default function Home() {
       });
     }
     
+    // Animate logo
+    if (logoRef.current) {
+      gsap.to(logoRef.current, {
+        scale: 1.2,
+        rotation: 360,
+        duration: 1,
+        ease: 'power2.inOut'
+      });
+    }
+    
     // Container zoom animation
     if (containerRef.current) {
       gsap.to(containerRef.current, {
@@ -218,14 +229,14 @@ export default function Home() {
             ref={buttonRef}
             onClick={handleStartChatting}
             disabled={isLoading}
-            className="relative px-10 py-5 bg-gradient-to-r from-cyan-600 to-blue-600 text-white font-bold text-xl rounded-2xl shadow-2xl hover:shadow-cyan-500/30 transition-all duration-300 flex items-center justify-center group border border-cyan-500/30 overflow-hidden transform transition-transform duration-300 hover:scale-105 focus:outline-none focus:ring-2 focus:ring-cyan-400 focus:ring-opacity-50 glow-cyan"
+            className="relative px-10 py-5 bg-gradient-to-r from-cyan-600 to-blue-600 text-white font-bold text-xl rounded-2xl shadow-2xl hover:shadow-cyan-500/30 transition-all duration-300 flex items-center justify-center group border border-cyan-500/30 overflow-hidden hover:scale-105 focus:outline-none focus:ring-2 focus:ring-cyan-400 focus:ring-opacity-50 glow-cyan"
           >
             <span className="absolute inset-0 bg-gradient-to-r from-cyan-500/20 to-blue-500/20 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></span>
             <span className="relative flex items-center">
               {isLoading ? (
                 <>
                   <div className="flex items-center">
-                    <div className="relative mr-3">
+                    <div ref={logoRef} className="relative mr-3">
                       <div className="w-10 h-10 rounded-full overflow-hidden border-2 border-cyan-500/30">
                         <Image 
                           src="/assets/logo.png" 

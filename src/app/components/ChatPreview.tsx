@@ -4,6 +4,21 @@ import { useEffect, useRef, useState } from 'react';
 import { gsap } from 'gsap';
 import { generateMessage } from '@/utils/generateMessage';
 
+// Define types for our data
+interface TeamMember {
+  name: string;
+  role: string;
+  avatar: string;
+  color: string;
+}
+
+interface Message {
+  id: string;
+  user: string;
+  text: string;
+  time: string;
+}
+
 // Simple unique ID generator
 let messageIdCounter = 0;
 const generateUniqueId = () => {
@@ -12,12 +27,12 @@ const generateUniqueId = () => {
 
 export default function ChatPreview() {
   const messagesContainerRef = useRef<HTMLDivElement>(null);
-  const [messages, setMessages] = useState<any[]>([]);
+  const [messages, setMessages] = useState<Message[]>([]);
   const [isTyping, setIsTyping] = useState(false);
   const [typingUser, setTypingUser] = useState('AI-Chat'); // Default to AI-Chat
 
   // Team members with their details including avatar colors
-  const teamMembers = [
+  const teamMembers: TeamMember[] = [
     { name: 'Priya', role: 'Designer', avatar: 'P', color: 'from-pink-500 to-rose-500' },
     { name: 'Arjun', role: 'Developer', avatar: 'A', color: 'from-blue-500 to-cyan-500' },
     { name: 'Anaya', role: 'UX Strategist', avatar: 'A', color: 'from-purple-500 to-violet-500' },
@@ -27,7 +42,7 @@ export default function ChatPreview() {
 
   useEffect(() => {
     // Initialize with a few messages
-    const initialMessages = [];
+    const initialMessages: Message[] = [];
     for (let i = 0; i < 5; i++) {
       const msg = generateMessage();
       initialMessages.push({
@@ -50,7 +65,7 @@ export default function ChatPreview() {
       
       // Add new message after a delay to simulate typing
       setTimeout(() => {
-        const messageToAdd = {
+        const messageToAdd: Message = {
           id: generateUniqueId(),
           user: nextMsg.sender,
           text: nextMsg.text,
