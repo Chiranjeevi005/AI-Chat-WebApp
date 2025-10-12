@@ -46,10 +46,12 @@ export default function Navbar() {
         <div className="flex justify-between items-center">
           {/* Logo */}
           <div className="navbar-item flex items-center">
-            <div className="w-12 h-12 rounded-full mr-3">
-              <Image src="/assets/logo.png" alt="AI Chat Logo" width={48} height={48} className="rounded-full" />
-            </div>
-            <span className="text-2xl font-bold text-white">AI Chat</span>
+            <Link href="/" className="flex items-center">
+              <div className="w-12 h-12 rounded-full mr-3">
+                <Image src="/assets/logo.png" alt="AI Chat Logo" width={48} height={48} className="rounded-full" />
+              </div>
+              <span className="text-2xl font-bold text-white">AI Chat</span>
+            </Link>
           </div>
 
           {/* Desktop Navigation - removed all items as requested */}

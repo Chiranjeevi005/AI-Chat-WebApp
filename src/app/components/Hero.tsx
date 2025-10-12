@@ -182,7 +182,7 @@ export default function Hero() {
           className="flex flex-col sm:flex-row gap-6"
         >
           <Link 
-            href="/chat" 
+            href="/chat-session" 
             className="px-8 py-4 bg-gradient-to-r from-cyan-600 to-blue-600 text-white font-bold text-lg rounded-xl shadow-2xl hover:shadow-cyan-500/30 transition-all duration-300 flex items-center justify-center group border border-cyan-500/30 relative overflow-hidden"
           >
             <span className="absolute inset-0 bg-gradient-to-r from-cyan-500/20 to-blue-500/20 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></span>
