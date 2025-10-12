@@ -62,17 +62,32 @@
   border: 1px solid rgba(255, 255, 255, 0.08);
 }
 
-/* Glow effects */
+/* Enhanced glow effects */
 .glow-cyan {
-  box-shadow: 0 0 15px rgba(var(--glow-cyan), 0.5);
+  box-shadow: 0 0 20px rgba(var(--glow-cyan), 0.6);
 }
 
 .glow-violet {
-  box-shadow: 0 0 15px rgba(var(--glow-violet), 0.5);
+  box-shadow: 0 0 20px rgba(var(--glow-violet), 0.6);
 }
 
 .glow-purple {
-  box-shadow: 0 0 15px rgba(var(--glow-purple), 0.5);
+  box-shadow: 0 0 20px rgba(var(--glow-purple), 0.6);
+}
+
+/* Multi-layered glow effect */
+.glow-cyan-multi {
+  box-shadow: 
+    0 0 10px rgba(var(--glow-cyan), 0.4),
+    0 0 20px rgba(var(--glow-cyan), 0.3),
+    0 0 30px rgba(var(--glow-cyan), 0.2);
+}
+
+.glow-violet-multi {
+  box-shadow: 
+    0 0 10px rgba(var(--glow-violet), 0.4),
+    0 0 20px rgba(var(--glow-violet), 0.3),
+    0 0 30px rgba(var(--glow-violet), 0.2);
 }
 
 /* Animation classes */
@@ -115,6 +130,28 @@
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
+}
+
+/* Enhanced gradient text with animation */
+.gradient-text-animated {
+  background: linear-gradient(90deg, rgb(var(--glow-cyan)), rgb(var(--glow-violet)), rgb(var(--glow-purple)));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  background-size: 200% 200%;
+  animation: gradientShift 3s ease infinite;
+}
+
+@keyframes gradientShift {
+  0% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+  100% {
+    background-position: 0% 50%;
+  }
 }
 
 /* Custom animations */
@@ -186,6 +223,18 @@
   }
 }
 
+@keyframes pulse-glow {
+  0% {
+    box-shadow: 0 0 5px rgba(var(--glow-cyan), 0.4);
+  }
+  50% {
+    box-shadow: 0 0 20px rgba(var(--glow-cyan), 0.6);
+  }
+  100% {
+    box-shadow: 0 0 5px rgba(var(--glow-cyan), 0.4);
+  }
+}
+
 .animate-float {
   animation: float 3s ease-in-out infinite;
 }
@@ -212,7 +261,19 @@
   animation: spin-reverse 20s linear infinite;
 }
 
+.animate-pulse-glow {
+  animation: pulse-glow 2s infinite;
+}
+
 /* Responsive adjustments */
+@media (max-width: 1024px) {
+  .container {
+    max-width: 100%;
+    padding-left: 2rem;
+    padding-right: 2rem;
+  }
+}
+
 @media (max-width: 768px) {
   .container {
     padding-left: 1rem;

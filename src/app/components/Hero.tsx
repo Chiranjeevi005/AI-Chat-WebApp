@@ -9,6 +9,7 @@ export default function Hero() {
   const titleRef = useRef<HTMLHeadingElement>(null);
   const subtitleRef = useRef<HTMLParagraphElement>(null);
   const ctaRef = useRef<HTMLDivElement>(null);
+  const highlightRef = useRef<HTMLSpanElement>(null);
 
   // Deterministic particle positions to avoid hydration errors
   const particlePositions = [
@@ -72,6 +73,20 @@ export default function Hero() {
       );
     }
     
+    // Animate highlight word
+    if (highlightRef.current) {
+      gsap.fromTo(highlightRef.current,
+        { backgroundPosition: '0% 50%' },
+        {
+          backgroundPosition: '100% 50%',
+          duration: 2,
+          ease: 'power1.inOut',
+          repeat: -1,
+          repeatDelay: 1
+        }
+      );
+    }
+    
     // Animate CTA buttons
     if (ctaRef.current) {
       gsap.fromTo(ctaRef.current,
@@ -103,9 +118,9 @@ export default function Hero() {
   return (
     <section 
       ref={heroRef}
-      className="relative w-full h-screen overflow-hidden flex items-center justify-center"
+      className="relative w-full min-h-screen overflow-hidden flex items-center justify-center"
     >
-      {/* Background image */}
+      {/* Primary background image */}
       <div 
         className="absolute inset-0 bg-cover bg-center bg-no-repeat"
         style={{
@@ -113,8 +128,8 @@ export default function Hero() {
         }}
       ></div>
       
-      {/* Overlay to ensure text readability */}
-      <div className="absolute inset-0 bg-gradient-to-br from-[#0D0D0D]/80 to-[#1A1A1A]/80"></div>
+      {/* Enhanced overlay for better text readability */}
+      <div className="absolute inset-0 bg-gradient-to-br from-[#0D0D0D]/90 via-[#1A1A1A]/80 to-[#0D0D0D]/90"></div>
       
       {/* Ambient particles */}
       <div className="absolute inset-0 overflow-hidden">
@@ -132,49 +147,75 @@ export default function Hero() {
         ))}
       </div>
       
-      {/* Radial glows */}
+      {/* Enhanced radial glows */}
       <div className="absolute inset-0">
-        <div className="absolute top-1/4 left-1/3 w-96 h-96 bg-cyan-500/15 rounded-full blur-3xl"></div>
-        <div className="absolute bottom-1/4 right-1/3 w-96 h-96 bg-purple-500/15 rounded-full blur-3xl"></div>
+        <div className="absolute top-1/4 left-1/4 w-[30rem] h-[30rem] bg-cyan-500/20 rounded-full blur-3xl"></div>
+        <div className="absolute bottom-1/3 right-1/4 w-[30rem] h-[30rem] bg-purple-500/20 rounded-full blur-3xl"></div>
+        <div className="absolute top-1/3 right-1/3 w-[20rem] h-[20rem] bg-violet-500/25 rounded-full blur-3xl"></div>
       </div>
 
       {/* Main Content Container */}
-      <div className="relative z-10 flex flex-col items-center justify-center text-center px-4 max-w-4xl">
-        {/* Title and Subtitle */}
-        <div className="mb-12">
+      <div className="relative z-10 flex flex-col items-center justify-center px-4 max-w-6xl w-full">
+        {/* Refined Title and Subtitle */}
+        <div className="text-center mb-16">
           <h1 
             ref={titleRef}
-            className="text-4xl md:text-5xl lg:text-6xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-purple-500 mb-6"
+            className="text-4xl md:text-5xl lg:text-6xl xl:text-7xl font-bold text-white mb-8 leading-tight tracking-tight"
           >
-            AI-Powered Communication
+            Redefining Digital
+            <br />
+            <span className="text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 via-purple-500 to-violet-600">
+              Communication
+            </span>
           </h1>
           <p 
             ref={subtitleRef}
-            className="text-xl md:text-2xl text-cyan-200/90 max-w-2xl mx-auto"
+            className="text-lg md:text-xl lg:text-2xl text-gray-300 max-w-3xl mx-auto font-light leading-relaxed"
           >
-            Experience the future of collaboration with intelligent real-time messaging
+            Experience the future of collaboration with <span ref={highlightRef} className="text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-purple-500 font-medium">intelligent</span> real-time messaging
           </p>
         </div>
 
-        {/* CTA Buttons */}
+        {/* Enhanced CTA Section */}
         <div 
           ref={ctaRef}
           className="flex flex-col sm:flex-row gap-6"
         >
           <Link 
             href="/chat" 
-            className="px-10 py-5 bg-gradient-to-r from-cyan-500 to-purple-600 rounded-2xl text-white font-bold text-lg shadow-2xl hover:scale-105 transition-transform flex items-center justify-center"
-            style={{
-              boxShadow: '0 0 30px rgba(56, 189, 248, 0.7)'
-            }}
+            className="px-8 py-4 bg-gradient-to-r from-cyan-600 to-blue-600 text-white font-bold text-lg rounded-xl shadow-2xl hover:shadow-cyan-500/30 transition-all duration-300 flex items-center justify-center group border border-cyan-500/30 relative overflow-hidden"
           >
-            Start Chatting Now →
+            <span className="absolute inset-0 bg-gradient-to-r from-cyan-500/20 to-blue-500/20 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></span>
+            <span className="relative flex items-center">
+              Start Chatting
+              <svg 
+                className="ml-2 w-5 h-5 transition-transform group-hover:translate-x-1" 
+                fill="none" 
+                stroke="currentColor" 
+                viewBox="0 0 24 24" 
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M14 5l7 7m0 0l-7 7m7-7H3"></path>
+              </svg>
+            </span>
           </Link>
           <Link 
             href="#demo" 
-            className="px-10 py-5 border-2 border-cyan-400/60 text-cyan-300 rounded-2xl hover:bg-cyan-400/15 transition-all flex items-center justify-center text-lg font-bold"
+            className="px-8 py-4 bg-transparent text-gray-200 font-bold text-lg rounded-xl hover:bg-gray-800/50 transition-all duration-300 flex items-center justify-center border border-gray-700 group relative overflow-hidden"
           >
-            Watch Demo →
+            <span className="absolute inset-0 bg-gradient-to-r from-gray-800/20 to-gray-900/20 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></span>
+            <span className="relative flex items-center">
+              View Demo
+              <svg 
+                className="ml-2 w-5 h-5 transition-transform group-hover:translate-x-1" 
+                fill="none" 
+                stroke="currentColor" 
+                viewBox="0 0 24 24" 
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M14 5l7 7m0 0l-7 7m7-7H3"></path>
+              </svg>
+            </span>
           </Link>
         </div>
       </div>

@@ -101,7 +101,7 @@ export default function ChatPreview() {
   }, [isTyping]);
 
   return (
-    <section className="py-20 relative overflow-hidden">
+    <section id="demo" className="py-20 relative overflow-hidden">
       {/* Enhanced background elements for futuristic feel */}
       <div className="absolute inset-0 z-0">
         <div className="absolute top-1/4 right-1/4 w-96 h-96 bg-violet-500 rounded-full mix-blend-soft-light filter blur-3xl opacity-15 animate-pulse"></div>
@@ -118,9 +118,9 @@ export default function ChatPreview() {
           </p>
         </div>
 
-        <div className="max-w-4xl mx-auto">
+        <div className="max-w-6xl mx-auto">
           {/* Enhanced chat container with futuristic styling */}
-          <div className="glass rounded-3xl overflow-hidden border border-gray-700 shadow-2xl">
+          <div className="glass rounded-3xl overflow-hidden border border-gray-700 shadow-2xl mb-12">
             {/* Enhanced chat header */}
             <div className="bg-gray-900 bg-opacity-70 p-4 border-b border-gray-700 backdrop-blur-sm">
               <div className="flex items-center">
@@ -250,7 +250,7 @@ export default function ChatPreview() {
           </div>
           
           {/* Enhanced room sidebar preview */}
-          <div className="mt-8 glass rounded-2xl p-6 border border-gray-700 shadow-xl">
+          <div className="glass rounded-2xl p-6 border border-gray-700 shadow-xl">
             <div className="flex justify-between items-center mb-4">
               <h3 className="text-xl font-semibold text-white">Active Rooms</h3>
               <button className="text-cyan-400 hover:text-cyan-300 transition-colors">

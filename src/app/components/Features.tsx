@@ -13,6 +13,8 @@ if (typeof window !== 'undefined') {
 export default function Features() {
   const sectionRef = useRef<HTMLDivElement>(null);
   const cardsRef = useRef<HTMLDivElement[]>([]);
+  const image1Ref = useRef<HTMLDivElement>(null);
+  const image2Ref = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     // Card entrance animations
@@ -63,6 +65,41 @@ export default function Features() {
         card.removeEventListener('mouseleave', handleMouseLeave);
       };
     });
+
+    // Image animations
+    if (image1Ref.current) {
+      gsap.fromTo(
+        image1Ref.current,
+        { opacity: 0, scale: 0.8 },
+        {
+          opacity: 1,
+          scale: 1,
+          duration: 1.2,
+          ease: 'elastic.out(1, 0.3)',
+          scrollTrigger: {
+            trigger: image1Ref.current,
+            start: 'top 80%',
+          }
+        }
+      );
+    }
+    
+    if (image2Ref.current) {
+      gsap.fromTo(
+        image2Ref.current,
+        { opacity: 0, scale: 0.8 },
+        {
+          opacity: 1,
+          scale: 1,
+          duration: 1.2,
+          ease: 'elastic.out(1, 0.3)',
+          scrollTrigger: {
+            trigger: image2Ref.current,
+            start: 'top 80%',
+          }
+        }
+      );
+    }
 
     // Cleanup
     return () => {
@@ -115,11 +152,11 @@ export default function Features() {
       ref={sectionRef}
       className="py-20 relative overflow-hidden"
     >
-      {/* Background elements */}
+      {/* Enhanced background elements */}
       <div className="absolute inset-0 z-0">
         <div className="absolute top-0 left-0 w-full h-full">
-          <div className="absolute top-1/3 left-1/4 w-96 h-96 bg-cyan-500 rounded-full mix-blend-soft-light filter blur-3xl opacity-10"></div>
-          <div className="absolute bottom-1/3 right-1/4 w-96 h-96 bg-violet-500 rounded-full mix-blend-soft-light filter blur-3xl opacity-10"></div>
+          <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-cyan-500 rounded-full mix-blend-soft-light filter blur-3xl opacity-15 animate-pulse"></div>
+          <div className="absolute bottom-1/3 right-1/4 w-96 h-96 bg-violet-500 rounded-full mix-blend-soft-light filter blur-3xl opacity-15 animate-pulse"></div>
         </div>
       </div>
 
@@ -133,44 +170,86 @@ export default function Features() {
           </p>
         </div>
 
-        <div 
-          ref={(el) => { sectionRef.current = el; }} 
-          className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8"
-        >
-          {features.map((feature, index) => (
-            <div
-              key={index}
-              ref={(el) => { cardsRef.current[index] = el as HTMLDivElement; }}
-              className="glass rounded-2xl p-8 transform transition-all duration-300 hover:border-cyan-500 hover:glow-cyan"
-            >
-              <div className="text-cyan-400 mb-6">
-                {feature.icon}
-              </div>
-              <h3 className="text-2xl font-bold text-white mb-4">{feature.title}</h3>
-              <p className="text-gray-300">{feature.description}</p>
-              
-              {/* Animated connection line (hidden on mobile) */}
-              {index < 3 && (
-                <div className="hidden lg:block absolute top-1/2 -right-4 transform -translate-y-1/2">
-                  <svg width="32" height="2" viewBox="0 0 32 2">
-                    <path 
-                      d="M0 1 H32" 
-                      stroke="url(#lineGradient)" 
-                      strokeWidth="2" 
-                      fill="none" 
-                      strokeDasharray="4,4"
-                    />
-                    <defs>
-                      <linearGradient id="lineGradient" x1="0%" y1="0%" x2="100%" y2="0%">
-                        <stop offset="0%" stopColor="rgba(0, 255, 255, 0.5)" />
-                        <stop offset="100%" stopColor="rgba(130, 67, 204, 0.5)" />
-                      </linearGradient>
-                    </defs>
-                  </svg>
-                </div>
-              )}
+        {/* Feature Showcase with Images */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center mb-20">
+          {/* Image Showcase 1 */}
+          <div 
+            ref={image1Ref}
+            className="rounded-3xl overflow-hidden border border-gray-700 shadow-2xl relative h-[500px] group"
+          >
+            <div 
+              className="absolute inset-0 bg-cover bg-center bg-no-repeat transition-transform duration-700 group-hover:scale-105"
+              style={{
+                backgroundImage: "url('/assets/LandingPageImg1.png')"
+              }}
+            ></div>
+            <div className="absolute inset-0 bg-gradient-to-t from-[#0D0D0D] via-[#1A1A1A]/50 to-transparent"></div>
+            <div className="absolute bottom-0 left-0 right-0 p-8">
+              <h3 className="text-2xl font-bold text-white mb-2">Immersive Interface</h3>
+              <p className="text-cyan-200">Experience our cutting-edge UI with 3D elements and smooth animations</p>
             </div>
-          ))}
+          </div>
+          
+          {/* Feature Cards */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {features.slice(0, 2).map((feature, index) => (
+              <div
+                key={index}
+                ref={(el) => { if (el) cardsRef.current[index] = el; }}
+                className="glass rounded-2xl p-6 transform transition-all duration-300 hover:border-cyan-500 hover:glow-cyan group relative overflow-hidden h-full"
+              >
+                {/* Decorative background element */}
+                <div className="absolute -top-10 -right-10 w-32 h-32 bg-gradient-to-br from-cyan-500/10 to-purple-500/10 rounded-full blur-xl group-hover:scale-150 transition-transform duration-500"></div>
+                
+                <div className="relative z-10 text-cyan-400 mb-4">
+                  {feature.icon}
+                </div>
+                <h3 className="text-xl font-bold text-white mb-2 relative z-10">{feature.title}</h3>
+                <p className="text-gray-300 text-sm relative z-10">{feature.description}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+        
+        {/* Second Feature Showcase */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
+          {/* Feature Cards */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 order-2 lg:order-1">
+            {features.slice(2, 4).map((feature, index) => (
+              <div
+                key={index + 2}
+                ref={(el) => { if (el) cardsRef.current[index + 2] = el; }}
+                className="glass rounded-2xl p-6 transform transition-all duration-300 hover:border-cyan-500 hover:glow-cyan group relative overflow-hidden h-full"
+              >
+                {/* Decorative background element */}
+                <div className="absolute -top-10 -right-10 w-32 h-32 bg-gradient-to-br from-cyan-500/10 to-purple-500/10 rounded-full blur-xl group-hover:scale-150 transition-transform duration-500"></div>
+                
+                <div className="relative z-10 text-cyan-400 mb-4">
+                  {feature.icon}
+                </div>
+                <h3 className="text-xl font-bold text-white mb-2 relative z-10">{feature.title}</h3>
+                <p className="text-gray-300 text-sm relative z-10">{feature.description}</p>
+              </div>
+            ))}
+          </div>
+          
+          {/* Image Showcase 2 */}
+          <div 
+            ref={image2Ref}
+            className="rounded-3xl overflow-hidden border border-gray-700 shadow-2xl relative h-[500px] group order-1 lg:order-2"
+          >
+            <div 
+              className="absolute inset-0 bg-cover bg-center bg-no-repeat transition-transform duration-700 group-hover:scale-105"
+              style={{
+                backgroundImage: "url('/assets/LandingPageImg2.png')"
+              }}
+            ></div>
+            <div className="absolute inset-0 bg-gradient-to-t from-[#0D0D0D] via-[#1A1A1A]/50 to-transparent"></div>
+            <div className="absolute bottom-0 left-0 right-0 p-8">
+              <h3 className="text-2xl font-bold text-white mb-2">Seamless Experience</h3>
+              <p className="text-cyan-200">Intuitive design that enhances productivity and collaboration</p>
+            </div>
+          </div>
         </div>
       </div>
     </section>
