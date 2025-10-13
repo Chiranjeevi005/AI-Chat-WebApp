@@ -1,12 +1,13 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import { getSocket } from '@/utils/socket';
-import LoginModal from '@/app/components/LoginModal';
 import RoomSidebar from '@/app/components/RoomSidebar';
 import ChatArea from '@/app/components/ChatArea';
 import AIAssistantPanel from '@/app/components/AIAssistantPanel';
 import Image from 'next/image';
+import { useAuth } from '../components/AuthProvider';
 
 interface Message {
   id: number;
@@ -35,8 +36,9 @@ interface UserData {
 }
 
 export default function ChatSessionPage() {
+  const router = useRouter();
+  const { user, loading } = useAuth();
   const [isLoading, setIsLoading] = useState(true);
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [username, setUsername] = useState('');
   const [room, setRoom] = useState('');
   const [rooms, setRooms] = useState<string[]>(['General']);
@@ -50,14 +52,25 @@ export default function ChatSessionPage() {
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const socket = getSocket();
 
+  // Redirect to login if not authenticated
+  useEffect(() => {
+    if (!loading && !user) {
+      router.push('/auth/login');
+    }
+  }, [user, loading, router]);
+
   useEffect(() => {
     // Simulate loading AI environment
     const timer = setTimeout(() => {
       setIsLoading(false);
+      // Set username from user data
+      if (user) {
+        setUsername(user.email || 'User');
+      }
     }, 1500);
     
     return () => clearTimeout(timer);
-  }, []);
+  }, [user]);
 
   useEffect(() => {
     // Listen for room updates
@@ -71,13 +84,13 @@ export default function ChatSessionPage() {
     };
   }, [socket]);
 
-  const handleLogin = (user: string, selectedRoom: string) => {
-    setUsername(user);
-    setRoom(selectedRoom);
-    setIsLoggedIn(true);
-
-    // Join the room
-    socket.emit('join', { username: user, room: selectedRoom });
+  useEffect(() => {
+    if (!user) return;
+    
+    // Join the room when user is available
+    const defaultRoom = 'General';
+    setRoom(defaultRoom);
+    socket.emit('join', { username: user.email || 'User', room: defaultRoom });
 
     // Listen for room data
     socket.on('roomData', (data: RoomData) => {
@@ -90,7 +103,7 @@ export default function ChatSessionPage() {
 
     // Listen for new messages
     socket.on('message', (message: Message) => {
-      setMessages(prev => [...prev, { ...message, self: message.user === user }]);
+      setMessages(prev => [...prev, { ...message, self: message.user === (user.email || 'User') }]);
     });
 
     // Listen for user joined
@@ -108,7 +121,15 @@ export default function ChatSessionPage() {
         participants: prev.participants.filter(p => p !== data.username)
       }));
     });
-  };
+
+    // Clean up socket listeners
+    return () => {
+      socket.off('roomData');
+      socket.off('message');
+      socket.off('userJoined');
+      socket.off('userLeft');
+    };
+  }, [user, socket]);
 
   const addMessage = (message: Message) => {
     // For user messages, send to server
@@ -123,7 +144,7 @@ export default function ChatSessionPage() {
     setAiState(prev => ({ ...prev, ...newState }));
   };
 
-  if (isLoading) {
+  if (loading || isLoading) {
     return (
       <div className="min-h-screen w-full flex items-center justify-center bg-gradient-to-br from-gray-900 to-black">
         <div className="text-center">
@@ -154,8 +175,8 @@ export default function ChatSessionPage() {
     );
   }
 
-  if (!isLoggedIn) {
-    return <LoginModal onLogin={handleLogin} rooms={rooms} />;
+  if (!user) {
+    return null; // Will redirect via useEffect
   }
 
   return (

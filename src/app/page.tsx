@@ -4,9 +4,11 @@ import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { gsap } from 'gsap';
 import Image from 'next/image';
+import { useAuth } from './components/AuthProvider';
 
 export default function Home() {
   const router = useRouter();
+  const { user, loading } = useAuth();
   const [isLoading, setIsLoading] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
   const contentRef = useRef<HTMLDivElement>(null);
@@ -14,7 +16,11 @@ export default function Home() {
   const particlesRef = useRef<HTMLDivElement>(null);
   const logoRef = useRef<HTMLDivElement>(null);
 
-  // Deterministic particle positions to avoid hydration errors
+  useEffect(() => {
+    // Debugging: Log user authentication state changes
+    console.log('Home page - User authentication state changed:', { user, loading });
+  }, [user, loading]);
+
   const particlePositions = [
     { width: 4, height: 5, top: 12, left: 20 },
     { width: 5, height: 4, top: 28, left: 80 },
@@ -141,6 +147,27 @@ export default function Home() {
   const handleStartChatting = () => {
     if (isLoading) return;
     
+    console.log('Start Chatting clicked - Current auth state:', { user, loading });
+    
+    // Check if user is authenticated - more reliable check
+    // We need to check if we have a user with an ID or email
+    const isUserAuthenticated = user && (user.id || user.email);
+    
+    console.log('Auth check result:', { isUserAuthenticated, user, loading });
+    
+    // If user is authenticated, redirect immediately to chat session
+    if (isUserAuthenticated) {
+      console.log('User is authenticated, redirecting to chat session');
+      router.push('/chat-session');
+      return;
+    }
+    
+    // If not authenticated, proceed with animation and redirect to login
+    console.log('User is not authenticated, proceeding with animation to login');
+    startAnimation(false);
+  };
+  
+  const startAnimation = (isUserAuthenticated: boolean) => {
     setIsLoading(true);
     
     // Button animation on click
@@ -177,8 +204,16 @@ export default function Home() {
         duration: 1,
         ease: 'power2.inOut',
         onComplete: () => {
-          // Navigate to chat session after animation
-          router.push('/chat-session');
+          // Navigate based on authentication status
+          console.log('Animation complete - Navigating. Authenticated:', isUserAuthenticated);
+          
+          if (isUserAuthenticated) {
+            console.log('Redirecting to chat session');
+            router.push('/chat-session');
+          } else {
+            console.log('Redirecting to login');
+            router.push('/auth/login');
+          }
         }
       });
     }

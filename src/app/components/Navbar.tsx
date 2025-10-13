@@ -4,8 +4,10 @@ import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { gsap } from 'gsap';
 import Image from 'next/image';
+import { useAuth } from '@/app/components/AuthProvider';
 
 export default function Navbar() {
+  const { user, signOut } = useAuth();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
 
@@ -59,15 +61,28 @@ export default function Navbar() {
             {/* Navigation items removed as per request */}
           </div>
 
-          {/* Auth Buttons - removed Sign In, keeping Get Started */}
-          <div className="navbar-item hidden md:flex space-x-4">
-            {/* Sign In removed as per request */}
-            <Link
-              href="/signup"
-              className="px-6 py-2 bg-gradient-to-r from-cyan-500 to-blue-500 text-white font-medium rounded-full hover:from-cyan-600 hover:to-blue-600 transition-all duration-300 transform hover:scale-105 glow-cyan"
-            >
-              Get Started
-            </Link>
+          {/* Auth Buttons */}
+          <div className="navbar-item hidden md:flex space-x-4 items-center">
+            {user ? (
+              <>
+                <span className="text-white font-medium mr-2">
+                  Hello, {user.user_metadata?.full_name || user.email?.split('@')[0] || 'User'}
+                </span>
+                <button
+                  onClick={() => signOut()}
+                  className="px-6 py-2 bg-gradient-to-r from-red-500 to-red-700 text-white font-medium rounded-full hover:from-red-600 hover:to-red-800 transition-all duration-300 transform hover:scale-105"
+                >
+                  Logout
+                </button>
+              </>
+            ) : (
+              <Link
+                href="/auth/login"
+                className="px-6 py-2 bg-gradient-to-r from-cyan-500 to-blue-500 text-white font-medium rounded-full hover:from-cyan-600 hover:to-blue-600 transition-all duration-300 transform hover:scale-105 glow-cyan"
+              >
+                Get Started
+              </Link>
+            )}
           </div>
 
           {/* Mobile menu button */}
@@ -95,14 +110,30 @@ export default function Navbar() {
             <div className="flex flex-col space-y-4">
               {/* Navigation items removed as per request */}
               <div className="flex flex-col space-y-3 pt-4 border-t border-gray-800">
-                {/* Sign In removed as per request */}
-                <Link
-                  href="/signup"
-                  className="px-6 py-3 bg-gradient-to-r from-cyan-500 to-blue-500 text-white font-medium rounded-full hover:from-cyan-600 hover:to-blue-600 transition-all duration-300 glow-cyan text-center"
-                  onClick={() => setIsMenuOpen(false)}
-                >
-                  Get Started
-                </Link>
+                {user ? (
+                  <>
+                    <div className="px-6 py-3 text-white font-medium text-center">
+                      Hello, {user.user_metadata?.full_name || user.email?.split('@')[0] || 'User'}
+                    </div>
+                    <button
+                      onClick={() => {
+                        signOut();
+                        setIsMenuOpen(false);
+                      }}
+                      className="px-6 py-3 bg-gradient-to-r from-red-500 to-red-700 text-white font-medium rounded-full hover:from-red-600 hover:to-red-800 transition-all duration-300 text-center"
+                    >
+                      Logout
+                    </button>
+                  </>
+                ) : (
+                  <Link
+                    href="/auth/login"
+                    className="px-6 py-3 bg-gradient-to-r from-cyan-500 to-blue-500 text-white font-medium rounded-full hover:from-cyan-600 hover:to-blue-600 transition-all duration-300 glow-cyan text-center"
+                    onClick={() => setIsMenuOpen(false)}
+                  >
+                    Get Started
+                  </Link>
+                )}
               </div>
             </div>
           </div>

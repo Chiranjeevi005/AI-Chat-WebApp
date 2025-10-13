@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Inter, Space_Grotesk, Poppins } from "next/font/google";
 import "./globals.css";
 import Navbar from "./components/Navbar";
+import { AuthProvider } from "./components/AuthProvider";
 
 const inter = Inter({
   variable: "--font-inter",
@@ -41,10 +42,12 @@ export default function RootLayout({
       className={`${inter.variable} ${spaceGrotesk.variable} ${poppins.variable}`}
     >
       <body className="font-sans">
-        <Navbar />
-        <main className="pt-20">
-          {children}
-        </main>
+        <AuthProvider>
+          <Navbar />
+          <main className="pt-20">
+            {children}
+          </main>
+        </AuthProvider>
       </body>
     </html>
   );

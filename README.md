@@ -1,6 +1,6 @@
 # AI Chat - Futuristic Real-time Communication Platform
 
-A cutting-edge chat application with a futuristic dark-themed UI, 3D elements, and smooth animations built with Next.js, TailwindCSS, and GSAP.
+A cutting-edge chat application with a futuristic dark-themed UI, 3D elements, and smooth animations built with Next.js, TailwindCSS, and GSAP. This application now includes a secure authentication system powered by Supabase Auth.
 
 ## Features
 
@@ -17,6 +17,8 @@ A cutting-edge chat application with a futuristic dark-themed UI, 3D elements, a
 - **Styling**: TailwindCSS v4, CSS Modules
 - **Animations**: GSAP (GreenSock Animation Platform)
 - **3D Graphics**: Three.js, React Three Fiber, React Three Drei
+- **Authentication**: Supabase Auth
+- **Database**: Supabase PostgreSQL with Row Level Security
 - **State Management**: React Hooks
 - **Deployment**: Node.js Server
 
@@ -63,17 +65,20 @@ src/
    npm install
    ```
 
-2. **Run Development Server**:
+2. **Environment Setup**:
+   Create a `.env.local` file based on `.env.example` and add your Supabase credentials.
+
+3. **Run Development Server**:
    ```bash
    npm run dev
    ```
 
-3. **Build for Production**:
+4. **Build for Production**:
    ```bash
    npm run build
    ```
 
-4. **Start Production Server**:
+5. **Start Production Server**:
    ```bash
    npm start
    ```
@@ -81,7 +86,11 @@ src/
 ## Pages
 
 - `/` - Main landing page
-- `/chat` - Chat interface
+- `/auth/login` - Login page with email, phone, and Google OAuth options
+- `/auth/signup` - User registration page
+- `/auth/verify-email` - Email verification page
+- `/auth/callback` - OAuth callback handler
+- `/chat-session` - Main chat interface (protected route)
 - `/logo` - 3D logo showcase
 - `/test` - Component testing page
 
@@ -115,6 +124,26 @@ All animations are implemented with GSAP and can be customized in:
 - Firefox (latest)
 - Safari (latest)
 - Edge (latest)
+
+## Authentication System
+
+This application implements a secure authentication system using Supabase Auth with the following features:
+
+- Email and password authentication
+- Google OAuth integration
+- Phone number authentication with OTP
+- Session management with JWT tokens
+- Protected routes and API endpoints
+- Row Level Security (RLS) for database access control
+
+## Security Features
+
+- HttpOnly, Secure cookies for session storage
+- PKCE flow for OAuth authentication
+- Rate limiting for authentication endpoints
+- Input validation and sanitization
+- Protected API routes with JWT verification
+- Row Level Security policies in the database
 
 ## Contributing
 
