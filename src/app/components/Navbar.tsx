@@ -4,10 +4,10 @@ import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { gsap } from 'gsap';
 import Image from 'next/image';
-import { useAuth } from '@/app/components/AuthProvider';
+import { useAuthContext } from '@/contexts/AuthContext';
 
 export default function Navbar() {
-  const { user, signOut } = useAuth();
+  const { user, signOut } = useAuthContext();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
 
@@ -36,8 +36,6 @@ export default function Navbar() {
     };
   }, []);
 
-  // Removed navItems array since we're removing all these items
-                        
   return (
     <nav
       className={`fixed w-full z-50 transition-all duration-300 ${

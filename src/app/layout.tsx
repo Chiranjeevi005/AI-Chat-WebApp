@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { Inter, Space_Grotesk, Poppins } from "next/font/google";
 import "./globals.css";
 import Navbar from "./components/Navbar";
-import { AuthProvider } from "./components/AuthProvider";
+import { AuthProvider } from "@/contexts/AuthContext";
 
 const inter = Inter({
   variable: "--font-inter",

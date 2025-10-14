@@ -1,11 +1,12 @@
 'use client';
 
 import { useEffect } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { supabase } from '@/lib/supabaseClient';
 
 export default function OAuthCallbackPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
 
   useEffect(() => {
     // Handle OAuth callback
@@ -21,9 +22,10 @@ export default function OAuthCallbackPage() {
         }
 
         if (data.session) {
-          // Successfully authenticated, redirect to home
-          console.log('OAuth successful, redirecting to home');
-          router.push('/');
+          // Successfully authenticated, check for redirect parameter
+          const redirect = searchParams.get('redirect');
+          console.log('OAuth successful, redirecting to:', redirect || '/chat-session');
+          router.push(redirect || '/chat-session');
         } else {
           // No session, redirect to login
           console.log('No session found after OAuth');
@@ -36,7 +38,7 @@ export default function OAuthCallbackPage() {
     };
 
     handleCallback();
-  }, [router]);
+  }, [router, searchParams]);
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-gray-900 to-black p-4">

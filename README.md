@@ -8,6 +8,7 @@ A cutting-edge chat application with a futuristic dark-themed UI, 3D elements, a
 - 🎨 **3D Interactive Elements**: React Three Fiber powered 3D logo and components
 - ✨ **Smooth Animations**: GSAP-powered transitions and micro-interactions
 - 💬 **Real-time Chat Interface**: Fully functional chat UI with responsive design
+- 🔐 **Secure Authentication**: Complete authentication system with email/password and OAuth
 - 📱 **Mobile Responsive**: Optimized for all device sizes
 - 🔥 **Modern UI Components**: Glassmorphism cards, gradient text, and glow effects
 
@@ -35,131 +36,68 @@ src/
 │   ├── page.tsx          # Main landing page
 │   └── globals.css       # Global styles and animations
 ├── utils/                # Utility functions
+├── lib/                  # Library functions and services
+├── hooks/                # Custom React hooks
+├── contexts/             # React context providers
 └── public/               # Static assets
 ```
 
-## Key Components
+## Authentication System
 
-### Landing Page
-- Hero section with animated 3D logo
-- Features section with interactive cards
-- Chat preview with sample messages
-- Responsive footer
+This application includes a comprehensive authentication system with:
 
-### Chat Interface
-- Collapsible sidebar with room list
-- Main chat area with message bubbles
-- Message input with attachment options
-- Online users panel
+- **Email/Password Authentication**: Traditional username/password login
+- **OAuth Integration**: Google, GitHub, and Discord login options
+- **Session Management**: Secure session handling with automatic refresh
+- **Protected Routes**: Middleware-based route protection
+- **API Security**: JWT-based API endpoint protection
+- **Role-Based Access**: Permission-based access control
 
-### Special Effects
-- Glassmorphism UI elements
-- Gradient text and glow effects
-- Floating animations and particle effects
-- Scroll-triggered parallax effects
+For detailed information about the authentication system, see:
+- [Authentication System Documentation](AUTH_SYSTEM_DOCUMENTATION.md)
+- [End-to-End Auth System](END_TO_END_AUTH_SYSTEM.md)
 
-## Getting Started
+## Setup Instructions
 
-1. **Install Dependencies**:
+1. Install dependencies:
    ```bash
    npm install
    ```
 
-2. **Environment Setup**:
-   Create a `.env.local` file based on `.env.example` and add your Supabase credentials.
+2. Create a `.env.local` file with your Supabase credentials:
+   ```env
+   NEXT_PUBLIC_SUPABASE_URL=your_supabase_project_url
+   NEXT_PUBLIC_SUPABASE_ANON_KEY=your_supabase_anon_key
+   SUPABASE_SERVICE_ROLE_KEY=your_supabase_service_role_key
+   ```
 
-3. **Run Development Server**:
+3. Run the development server:
    ```bash
    npm run dev
    ```
 
-4. **Build for Production**:
-   ```bash
-   npm run build
-   ```
+4. Visit `http://localhost:3003` to view the application
 
-5. **Start Production Server**:
-   ```bash
-   npm start
-   ```
+## Available Scripts
 
-## Pages
-
-- `/` - Main landing page
-- `/auth/login` - Login page with email, phone, and Google OAuth options
-- `/auth/signup` - User registration page
-- `/auth/verify-email` - Email verification page
-- `/auth/callback` - OAuth callback handler
-- `/chat-session` - Main chat interface (protected route)
-- `/logo` - 3D logo showcase
-- `/test` - Component testing page
-
-## Customization
-
-### Colors
-The color palette is defined in `src/app/globals.css` using CSS variables:
-- Primary: Electric Cyan (#00FFFF)
-- Secondary: Violet (#8243CC)
-- Background: Dark Gradient (from #0D0D0D to #1A1A1A)
-
-### Animations
-All animations are implemented with GSAP and can be customized in:
-- Component-specific useEffect hooks
-- Global CSS keyframes in `globals.css`
-
-### 3D Components
-3D elements use React Three Fiber and can be modified in:
-- `src/app/components/ThreeDLogo.tsx`
-
-## Performance Optimizations
-
-- Code splitting with Next.js dynamic imports
-- Efficient animations with GSAP
-- Responsive images and assets
-- Optimized 3D rendering with React Three Fiber
-
-## Browser Support
-
-- Chrome (latest)
-- Firefox (latest)
-- Safari (latest)
-- Edge (latest)
-
-## Authentication System
-
-This application implements a secure authentication system using Supabase Auth with the following features:
-
-- Email and password authentication
-- Google OAuth integration
-- Phone number authentication with OTP
-- Session management with JWT tokens
-- Protected routes and API endpoints
-- Row Level Security (RLS) for database access control
+- `npm run dev` - Starts the development server
+- `npm run build` - Builds the application for production
+- `npm start` - Starts the production server
+- `npm run lint` - Runs the linter
 
 ## Security Features
 
-- HttpOnly, Secure cookies for session storage
-- PKCE flow for OAuth authentication
-- Rate limiting for authentication endpoints
+- Row Level Security (RLS) policies
+- Secure session management
+- HttpOnly, Secure cookies
+- Password strength requirements
 - Input validation and sanitization
-- Protected API routes with JWT verification
-- Row Level Security policies in the database
+- Rate limiting for authentication endpoints
 
 ## Contributing
 
-1. Fork the repository
-2. Create a feature branch
-3. Commit your changes
-4. Push to the branch
-5. Create a pull request
+Contributions are welcome! Please read our contributing guidelines before submitting pull requests.
 
 ## License
 
-This project is licensed under the MIT License - see the LICENSE file for details.
-
-## Acknowledgments
-
-- Design inspiration from Dribbble and Behance
-- n8n.io and Linear.app aesthetic influences
-- React Three Fiber for 3D components
-- GSAP for animations
+This project is licensed under the MIT License.

@@ -1,0 +1,215 @@
+'use client';
+
+import { useState, useEffect, useCallback, useMemo } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
+import { supabase } from '@/lib/supabaseClient';
+import { Session, User } from '@supabase/supabase-js';
+
+interface AuthState {
+  user: User | null;
+  session: Session | null;
+  loading: boolean;
+  error: string | null;
+}
+
+interface AuthHook {
+  user: User | null;
+  session: Session | null;
+  loading: boolean;
+  error: string | null;
+  isAuthenticated: boolean;
+  signUp: (email: string, password: string, options?: { username?: string }) => Promise<any>;
+  signInWithPassword: (email: string, password: string) => Promise<any>;
+  signInWithOAuth: (provider: 'google' | 'github' | 'discord') => Promise<any>;
+  signOut: () => Promise<void>;
+  resetError: () => void;
+}
+
+/**
+ * Custom hook for authentication management
+ * Provides a complete authentication solution with session management,
+ * OAuth integration, and error handling
+ */
+export function useAuth(): AuthHook {
+  const [authState, setAuthState] = useState<AuthState>({
+    user: null,
+    session: null,
+    loading: true,
+    error: null
+  });
+  
+  const router = useRouter();
+  const searchParams = useSearchParams();
+
+  // Check initial session on mount
+  useEffect(() => {
+    const checkSession = async () => {
+      try {
+        const { data: { session } } = await supabase.auth.getSession();
+        setAuthState(prev => ({
+          ...prev,
+          user: session?.user || null,
+          session: session,
+          loading: false
+        }));
+      } catch (error) {
+        console.error('Error checking session:', error);
+        setAuthState(prev => ({
+          ...prev,
+          loading: false,
+          error: 'Failed to check authentication status'
+        }));
+      }
+    };
+
+    checkSession();
+
+    // Listen for auth state changes
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      (_event, session) => {
+        setAuthState({
+          user: session?.user || null,
+          session: session,
+          loading: false,
+          error: null
+        });
+        
+        // Handle redirects based on auth state
+        if (session) {
+          // User logged in
+          if (typeof window !== 'undefined') {
+            const currentPath = window.location.pathname;
+            const urlParams = new URLSearchParams(window.location.search);
+            const redirect = urlParams.get('redirect');
+            
+            // Always check for redirect parameter after login, regardless of current path
+            if (redirect && currentPath.startsWith('/auth')) {
+              // Redirect to the specified page
+              router.push(redirect);
+            } else if (currentPath.startsWith('/auth') && !currentPath.startsWith('/auth/callback')) {
+              // If on auth pages but no redirect parameter, go to chat-session
+              router.push('/chat-session');
+            }
+          }
+        } else {
+          // User logged out
+          if (typeof window !== 'undefined') {
+            const currentPath = window.location.pathname;
+            if (currentPath.startsWith('/chat-session') || currentPath.startsWith('/profile')) {
+              router.push('/auth/login');
+            }
+          }
+        }
+      }
+    );
+
+    return () => {
+      subscription.unsubscribe();
+    };
+  }, [router]);
+
+  // Sign up with email and password
+  const signUp = useCallback(async (email: string, password: string, options?: { username?: string }) => {
+    try {
+      setAuthState(prev => ({ ...prev, loading: true, error: null }));
+      
+      const { data, error } = await supabase.auth.signUp({
+        email,
+        password,
+        options: {
+          data: {
+            username: options?.username
+          },
+          emailRedirectTo: `${window.location.origin}/auth/verify-email`
+        }
+      });
+
+      if (error) throw error;
+      
+      return data;
+    } catch (error: any) {
+      const errorMessage = error.message || 'Failed to sign up';
+      setAuthState(prev => ({ ...prev, error: errorMessage, loading: false }));
+      throw error;
+    }
+  }, []);
+
+  // Sign in with email and password
+  const signInWithPassword = useCallback(async (email: string, password: string) => {
+    try {
+      setAuthState(prev => ({ ...prev, loading: true, error: null }));
+      
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email,
+        password
+      });
+
+      if (error) throw error;
+      
+      return data;
+    } catch (error: any) {
+      const errorMessage = error.message || 'Failed to sign in';
+      setAuthState(prev => ({ ...prev, error: errorMessage, loading: false }));
+      throw error;
+    }
+  }, []);
+
+  // Sign in with OAuth provider
+  const signInWithOAuth = useCallback(async (provider: 'google' | 'github' | 'discord') => {
+    try {
+      setAuthState(prev => ({ ...prev, loading: true, error: null }));
+      
+      const { data, error } = await supabase.auth.signInWithOAuth({
+        provider,
+        options: {
+          redirectTo: `${window.location.origin}/auth/callback?redirect=${searchParams.get('redirect') || '/chat-session'}`
+        }
+      });
+
+      if (error) throw error;
+      
+      return data;
+    } catch (error: any) {
+      const errorMessage = error.message || `Failed to sign in with ${provider}`;
+      setAuthState(prev => ({ ...prev, error: errorMessage, loading: false }));
+      throw error;
+    }
+  }, [searchParams]);
+
+  // Sign out
+  const signOut = useCallback(async () => {
+    try {
+      setAuthState(prev => ({ ...prev, loading: true, error: null }));
+      
+      const { error } = await supabase.auth.signOut();
+      
+      if (error) throw error;
+      
+      router.push('/auth/login');
+    } catch (error: any) {
+      const errorMessage = error.message || 'Failed to sign out';
+      setAuthState(prev => ({ ...prev, error: errorMessage, loading: false }));
+      throw error;
+    }
+  }, [router]);
+
+  // Reset error state
+  const resetError = useCallback(() => {
+    setAuthState(prev => ({ ...prev, error: null }));
+  }, []);
+
+  // Memoized authentication status
+  const isAuthenticated = useMemo(() => {
+    return !authState.loading && !!authState.user;
+  }, [authState.loading, authState.user]);
+
+  return {
+    ...authState,
+    isAuthenticated,
+    signUp,
+    signInWithPassword,
+    signInWithOAuth,
+    signOut,
+    resetError
+  };
+}

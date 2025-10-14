@@ -2,12 +2,12 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { useAuth } from '@/app/components/AuthProvider';
+import { useAuthContext } from '@/contexts/AuthContext';
 
 export default function VerifyEmailPage() {
   const [timeLeft, setTimeLeft] = useState(30);
   const router = useRouter();
-  const { user } = useAuth();
+  const { user } = useAuthContext();
 
   useEffect(() => {
     // If user is already verified, redirect to chat
