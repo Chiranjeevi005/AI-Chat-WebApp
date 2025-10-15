@@ -1,14 +1,13 @@
 import React from 'react';
+import '@/app/custom-styles.css';
 
-export default async function ChatSessionLayout({
+export default function ChatSessionLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
-  // Removed authentication check to allow direct access
-  
   return (
-    <div className="h-screen bg-gradient-to-br from-gray-900 to-black flex">
+    <div className="h-screen w-screen overflow-hidden">
       {children}
     </div>
   );

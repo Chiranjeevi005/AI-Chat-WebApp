@@ -4,14 +4,14 @@ import { createContext, useContext, ReactNode } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 
 interface AuthContextType {
-  user: any;
-  session: any;
+  user: any | null;
+  session: any | null;
   loading: boolean;
   error: string | null;
   isAuthenticated: boolean;
-  signUp: (email: string, password: string, options?: { username?: string }) => Promise<any>;
-  signInWithPassword: (email: string, password: string) => Promise<any>;
-  signInWithOAuth: (provider: 'google' | 'github' | 'discord') => Promise<any>;
+  signUp: (email: string, password: string, options?: { username?: string }) => Promise<any | null>;
+  signInWithPassword: (email: string, password: string) => Promise<any | null>;
+  signInWithOAuth: (provider: 'google') => Promise<any | null>;
   signOut: () => Promise<void>;
   resetError: () => void;
 }

@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { Inter, Space_Grotesk, Poppins } from "next/font/google";
 import "./globals.css";
-import Navbar from "./components/Navbar";
+import Navbar from "./components/layout/Navbar";
 import { AuthProvider } from "@/contexts/AuthContext";
 
 const inter = Inter({

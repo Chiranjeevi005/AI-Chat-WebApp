@@ -1,8 +1,7 @@
-// Custom Express server with Socket.IO
+// Custom Express server
 const { createServer } = require('http');
 const { parse } = require('url');
 const next = require('next');
-const { initSocket } = require('./src/utils/socket-server');
 
 const dev = process.env.NODE_ENV !== 'production';
 const app = next({ dev });
@@ -13,9 +12,6 @@ app.prepare().then(() => {
     const parsedUrl = parse(req.url, true);
     handle(req, res, parsedUrl);
   });
-
-  // Initialize Socket.IO
-  initSocket(server);
 
   // Use PORT environment variable or default to 3003
   const port = process.env.PORT || 3003;

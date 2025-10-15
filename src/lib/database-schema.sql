@@ -1,4 +1,4 @@
--- Database schema for AI Chat App with Supabase
+-- Database schema for Chat App with Supabase
 
 -- Create profiles table (extends Supabase auth.users)
 create table if not exists profiles (

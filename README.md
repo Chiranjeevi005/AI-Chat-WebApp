@@ -1,4 +1,4 @@
-# AI Chat - Futuristic Real-time Communication Platform
+# Chat App - Futuristic Real-time Communication Platform
 
 A cutting-edge chat application with a futuristic dark-themed UI, 3D elements, and smooth animations built with Next.js, TailwindCSS, and GSAP. This application now includes a secure authentication system powered by Supabase Auth.
 
@@ -47,7 +47,7 @@ src/
 This application includes a comprehensive authentication system with:
 
 - **Email/Password Authentication**: Traditional username/password login
-- **OAuth Integration**: Google, GitHub, and Discord login options
+- **OAuth Integration**: Google login option
 - **Session Management**: Secure session handling with automatic refresh
 - **Protected Routes**: Middleware-based route protection
 - **API Security**: JWT-based API endpoint protection
@@ -59,24 +59,32 @@ For detailed information about the authentication system, see:
 
 ## Setup Instructions
 
-1. Install dependencies:
-   ```bash
-   npm install
-   ```
+### 1. Install dependencies:
+```bash
+npm install
+```
 
-2. Create a `.env.local` file with your Supabase credentials:
-   ```env
-   NEXT_PUBLIC_SUPABASE_URL=your_supabase_project_url
-   NEXT_PUBLIC_SUPABASE_ANON_KEY=your_supabase_anon_key
-   SUPABASE_SERVICE_ROLE_KEY=your_supabase_service_role_key
-   ```
+### 2. Supabase Setup:
+Follow the detailed [Supabase Setup Guide](README_SUPABASE.md) to:
+- Create a Supabase project
+- Get your API keys
+- Set up environment variables
+- Create database tables
 
-3. Run the development server:
-   ```bash
-   npm run dev
-   ```
+### 3. Create a `.env.local` file with your Supabase credentials:
+```env
+NEXT_PUBLIC_SUPABASE_URL=your_supabase_project_url
+NEXT_PUBLIC_SUPABASE_ANON_KEY=your_supabase_anon_key
+SUPABASE_SERVICE_ROLE_KEY=your_supabase_service_role_key
+NEXT_PUBLIC_APP_URL=http://localhost:3003
+```
 
-4. Visit `http://localhost:3003` to view the application
+### 4. Run the development server:
+```bash
+npm run dev
+```
+
+### 5. Visit `http://localhost:3003` to view the application
 
 ## Available Scripts
 
@@ -93,6 +101,16 @@ For detailed information about the authentication system, see:
 - Password strength requirements
 - Input validation and sanitization
 - Rate limiting for authentication endpoints
+
+## Troubleshooting
+
+If you encounter the "Failed to load rooms" error:
+1. Check that your Supabase environment variables are correctly set in `.env.local`
+2. Verify that you've created the database tables using the SQL script
+3. Ensure your Supabase project URL and API keys are correct
+4. Check the browser console for detailed error messages
+
+For detailed Supabase setup instructions, see [README_SUPABASE.md](README_SUPABASE.md)
 
 ## Contributing
 

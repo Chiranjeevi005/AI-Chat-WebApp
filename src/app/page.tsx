@@ -387,12 +387,12 @@ export default function Home() {
         className="relative z-10 text-center px-4 max-w-4xl flex flex-col items-center opacity-0"
       >
         <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-white mb-6 leading-tight">
-          Chat Beyond Limits — Where AI Joins the Conversation.
+          Chat Beyond Limits — Real-time Conversations.
         </h1>
         
         <p className="text-lg md:text-xl text-gray-300 max-w-2xl mx-auto mb-12 font-light leading-relaxed">
-          Step into a real-time chat experience powered by contextual intelligence.
-          Every word you type helps AI understand, enhance, and co-create.
+          Step into a real-time chat experience with seamless communication.
+          Connect with others instantly and effortlessly.
         </p>
         
         <div className="flex justify-center w-full">
@@ -436,7 +436,7 @@ export default function Home() {
         </div>
         
         <p className="text-sm text-gray-400 mt-6">
-          Step into the future of conversations — where AI and humans think together.
+          Step into the future of conversations — where people connect instantly.
         </p>
       </div>
     </div>

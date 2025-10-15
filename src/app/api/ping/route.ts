@@ -1,14 +1,13 @@
 import { NextResponse } from 'next/server';
-import { connectToDatabase } from '@/utils/database';
 
 export async function GET() {
   console.log('Ping request received');
   
   try {
-    await connectToDatabase();
-    return NextResponse.json({ status: 'ok', database: 'connected' });
+    // Simple ping response without database connection
+    return NextResponse.json({ status: 'ok', message: 'Server is running' });
   } catch (error) {
-    console.error('Database connection error:', error);
-    return NextResponse.json({ status: 'error', message: 'Database connection failed' });
+    console.error('Ping error:', error);
+    return NextResponse.json({ status: 'error', message: 'Server error' });
   }
 }

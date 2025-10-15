@@ -57,9 +57,9 @@ export default function SignupPage() {
       await signUp(email, password, { username });
       // After successful signup, redirect to verification page
       router.push('/auth/verify-email');
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error('Signup error:', err);
-      if (err.message) {
+      if (err instanceof Error) {
         if (err.message.includes('already registered')) {
           setError('An account with this email already exists');
         } else {
@@ -78,7 +78,7 @@ export default function SignupPage() {
       <div className="bg-gray-800/90 glass rounded-2xl p-8 w-full max-w-md border border-gray-700">
         <div className="text-center mb-8">
           <h1 className="text-3xl font-bold text-white mb-2">Create Account</h1>
-          <p className="text-gray-400">Join our AI-powered chat platform</p>
+          <p className="text-gray-400">Join our chat platform</p>
         </div>
 
         {error && (

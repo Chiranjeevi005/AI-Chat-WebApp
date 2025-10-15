@@ -8,7 +8,7 @@ import { NextRequest } from 'next/server';
  * for server-side rendered pages
  */
 export async function updateSession(request: NextRequest) {
-  let response = NextResponse.next({
+  const response = NextResponse.next({
     request: {
       headers: request.headers,
     },
@@ -44,7 +44,7 @@ export async function updateSession(request: NextRequest) {
  * and handles redirects for protected pages
  */
 export async function authMiddleware(request: NextRequest) {
-  let response = NextResponse.next({
+  const response = NextResponse.next({
     request: {
       headers: request.headers,
     },

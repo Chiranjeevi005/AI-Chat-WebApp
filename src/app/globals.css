@@ -1,237 +1,46 @@
 @import "tailwindcss";
 
-@layer base {
-  :root {
-    --background: 12 12 12;
-    --foreground: 240 240 240;
-    --primary: 68 142 255;
-    --primary-foreground: 255 255 255;
-    --secondary: 130 67 204;
-    --secondary-foreground: 255 255 255;
-    --accent: 0 255 255;
-    --accent-foreground: 0 0 0;
-    --muted: 30 30 30;
-    --muted-foreground: 180 180 180;
-    --card: 18 18 18;
-    --card-foreground: 240 240 240;
-    --border: 40 40 40;
-    --input: 40 40 40;
-    --ring: 68 142 255;
-    --radius: 0.5rem;
-    
-    /* Gradient colors */
-    --gradient-start: 13 13 13;
-    --gradient-end: 26 26 26;
-    --glow-cyan: 0 255 255;
-    --glow-violet: 130 67 204;
-    --glow-purple: 180 83 255;
-  }
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --foreground-rgb: 255, 255, 255;
+  --background-start-rgb: 15, 23, 42;
+  --background-end-rgb: 2, 6, 23;
 }
 
-@layer base {
-  body {
-    @apply bg-gradient-to-br from-[rgb(var(--gradient-start))] to-[rgb(var(--gradient-end))] text-[rgb(var(--foreground))] min-h-screen;
-    font-family: 'Inter', 'Space Grotesk', 'Poppins', 'Satoshi', sans-serif;
-    overflow-x: hidden;
+body {
+  color: rgb(var(--foreground-rgb));
+  background: linear-gradient(
+      to bottom,
+      transparent,
+      rgb(var(--background-end-rgb))
+    )
+    rgb(var(--background-start-rgb));
+}
+
+@layer utilities {
+  .glass {
+    background: rgba(30, 41, 59, 0.5);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
   }
   
-  /* Custom scrollbar */
-  ::-webkit-scrollbar {
-    width: 8px;
+  .glow-cyan {
+    box-shadow: 0 0 15px rgba(6, 182, 212, 0.5);
   }
   
-  ::-webkit-scrollbar-track {
-    background: rgba(30, 30, 30, 0.5);
+  .glow-violet {
+    box-shadow: 0 0 15px rgba(139, 92, 246, 0.5);
   }
   
-  ::-webkit-scrollbar-thumb {
-    background: linear-gradient(to bottom, rgb(var(--glow-cyan)), rgb(var(--glow-violet)));
-    border-radius: 4px;
-  }
-  
-  ::-webkit-scrollbar-thumb:hover {
-    background: linear-gradient(to bottom, rgb(var(--glow-violet)), rgb(var(--glow-purple)));
-  }
-}
-
-/* Glassmorphism effect */
-.glass {
-  background: rgba(30, 30, 30, 0.25);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
-  border: 1px solid rgba(255, 255, 255, 0.08);
-}
-
-/* Enhanced glow effects */
-.glow-cyan {
-  box-shadow: 0 0 20px rgba(var(--glow-cyan), 0.6);
-}
-
-.glow-violet {
-  box-shadow: 0 0 20px rgba(var(--glow-violet), 0.6);
-}
-
-.glow-purple {
-  box-shadow: 0 0 20px rgba(var(--glow-purple), 0.6);
-}
-
-/* Multi-layered glow effect */
-.glow-cyan-multi {
-  box-shadow: 
-    0 0 10px rgba(var(--glow-cyan), 0.4),
-    0 0 20px rgba(var(--glow-cyan), 0.3),
-    0 0 30px rgba(var(--glow-cyan), 0.2);
-}
-
-.glow-violet-multi {
-  box-shadow: 
-    0 0 10px rgba(var(--glow-violet), 0.4),
-    0 0 20px rgba(var(--glow-violet), 0.3),
-    0 0 30px rgba(var(--glow-violet), 0.2);
-}
-
-/* Animation classes */
-.fade-in {
-  opacity: 0;
-  transform: translateY(20px);
-}
-
-.fade-in.animate {
-  opacity: 1;
-  transform: translateY(0);
-  transition: opacity 0.6s ease-out, transform 0.6s ease-out;
-}
-
-.slide-in-left {
-  opacity: 0;
-  transform: translateX(-100%);
-}
-
-.slide-in-left.animate {
-  opacity: 1;
-  transform: translateX(0);
-  transition: opacity 0.6s ease-out, transform 0.6s ease-out;
-}
-
-.slide-in-right {
-  opacity: 0;
-  transform: translateX(100%);
-}
-
-.slide-in-right.animate {
-  opacity: 1;
-  transform: translateX(0);
-  transition: opacity 0.6s ease-out, transform 0.6s ease-out;
-}
-
-/* Gradient text */
-.gradient-text {
-  background: linear-gradient(90deg, rgb(var(--glow-cyan)), rgb(var(--glow-violet)), rgb(var(--glow-purple)));
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
-}
-
-/* Enhanced gradient text with animation */
-.gradient-text-animated {
-  background: linear-gradient(90deg, rgb(var(--glow-cyan)), rgb(var(--glow-violet)), rgb(var(--glow-purple)));
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
-  background-size: 200% 200%;
-  animation: gradientShift 3s ease infinite;
-}
-
-@keyframes gradientShift {
-  0% {
-    background-position: 0% 50%;
-  }
-  50% {
-    background-position: 100% 50%;
-  }
-  100% {
-    background-position: 0% 50%;
-  }
-}
-
-/* Custom animations */
-@keyframes float {
-  0% {
-    transform: translateY(0px);
-  }
-  50% {
-    transform: translateY(-10px);
-  }
-  100% {
-    transform: translateY(0px);
-  }
-}
-
-@keyframes float-delay {
-  0% {
-    transform: translateY(0px);
-  }
-  50% {
-    transform: translateY(-8px);
-  }
-  100% {
-    transform: translateY(0px);
-  }
-}
-
-@keyframes float-delay-2 {
-  0% {
-    transform: translateY(0px);
-  }
-  50% {
-    transform: translateY(-5px);
-  }
-  100% {
-    transform: translateY(0px);
-  }
-}
-
-@keyframes scroll {
-  0% {
-    transform: translateY(0);
-    opacity: 0;
-  }
-  50% {
-    opacity: 1;
-  }
-  100% {
-    transform: translateY(10px);
-    opacity: 0;
-  }
-}
-
-@keyframes spin-slow {
-  from {
-    transform: rotate(0deg);
-  }
-  to {
-    transform: rotate(360deg);
-  }
-}
-
-@keyframes spin-reverse {
-  from {
-    transform: rotate(0deg);
-  }
-  to {
-    transform: rotate(-360deg);
-  }
-}
-
-@keyframes pulse-glow {
-  0% {
-    box-shadow: 0 0 5px rgba(var(--glow-cyan), 0.4);
-  }
-  50% {
-    box-shadow: 0 0 20px rgba(var(--glow-cyan), 0.6);
-  }
-  100% {
-    box-shadow: 0 0 5px rgba(var(--glow-cyan), 0.4);
+  .text-gradient {
+    background: linear-gradient(90deg, #06b6d4, #0ea5e9, #8b5cf6);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
   }
 }
 
@@ -246,128 +55,26 @@
   }
 }
 
-@keyframes progress {
-  0% {
-    width: 0%;
-  }
-  100% {
-    width: 100%;
-  }
+.animate-fadeInUp {
+  animation: fadeInUp 0.5s ease-out forwards;
 }
 
-@keyframes ping {
-  75%, 100% {
-    transform: scale(1.5);
-    opacity: 0;
-  }
+/* Scrollbar styling */
+::-webkit-scrollbar {
+  width: 6px;
 }
 
-@keyframes shimmer {
-  0% {
-    background-position: -1000px 0;
-  }
-  100% {
-    background-position: 1000px 0;
-  }
+::-webkit-scrollbar-track {
+  background: rgba(30, 41, 59, 0.5);
 }
 
-@keyframes subtlePulse {
-  0%, 100% {
-    transform: scale(1);
-    opacity: 1;
-  }
-  50% {
-    transform: scale(1.02);
-    opacity: 0.9;
-  }
+::-webkit-scrollbar-thumb {
+  background: #4b5563;
+  border-radius: 3px;
 }
 
-@keyframes gentleFloat {
-  0%, 100% {
-    transform: translateY(0px);
-  }
-  50% {
-    transform: translateY(-5px);
-  }
-}
-
-.shimmer {
-  background: linear-gradient(to right, rgba(255,255,255,0.1) 0%, rgba(255,255,255,0.2) 50%, rgba(255,255,255,0.1) 100%);
-  background-size: 1000px 100%;
-  animation: shimmer 2s infinite linear;
-}
-
-.animate-float {
-  animation: float 4s ease-in-out infinite;
-}
-
-.animate-float-delay {
-  animation: float-delay 4s ease-in-out infinite;
-  animation-delay: 0.5s;
-}
-
-.animate-float-delay-2 {
-  animation: float-delay-2 4s ease-in-out infinite;
-  animation-delay: 1s;
-}
-
-.animate-scroll {
-  animation: scroll 2s infinite;
-}
-
-.animate-spin-slow {
-  animation: spin-slow 15s linear infinite;
-}
-
-.animate-spin-reverse {
-  animation: spin-reverse 20s linear infinite;
-}
-
-.animate-pulse-glow {
-  animation: pulse-glow 2s infinite;
-}
-
-.animate-progress {
-  animation: progress 2s ease-in-out infinite;
-  width: 0%;
-}
-
-.animate-ping {
-  animation: ping 2s cubic-bezier(0,0,0.2,1) infinite;
-}
-
-.animate-subtle-pulse {
-  animation: subtlePulse 3s ease-in-out infinite;
-}
-
-.animate-gentle-float {
-  animation: gentleFloat 3s ease-in-out infinite;
-}
-
-@keyframes orbit {
-  0% {
-    transform: rotate(0deg) translate(40px) rotate(0deg);
-  }
-  100% {
-    transform: rotate(360deg) translate(40px) rotate(-360deg);
-  }
-}
-
-@keyframes beamPulse {
-  0%, 100% {
-    opacity: 0.3;
-  }
-  50% {
-    opacity: 1;
-  }
-}
-
-.animate-orbit {
-  animation: orbit 3s linear infinite;
-}
-
-.animate-beam-pulse {
-  animation: beamPulse 2s infinite;
+::-webkit-scrollbar-thumb:hover {
+  background: #6b7280;
 }
 
 /* Responsive adjustments */

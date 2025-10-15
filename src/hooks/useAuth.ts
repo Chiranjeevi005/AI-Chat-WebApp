@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback, useMemo } from 'react';
+import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { supabase } from '@/lib/supabaseClient';
 import { Session, User } from '@supabase/supabase-js';
@@ -20,7 +20,7 @@ interface AuthHook {
   isAuthenticated: boolean;
   signUp: (email: string, password: string, options?: { username?: string }) => Promise<any>;
   signInWithPassword: (email: string, password: string) => Promise<any>;
-  signInWithOAuth: (provider: 'google' | 'github' | 'discord') => Promise<any>;
+  signInWithOAuth: (provider: 'google') => Promise<any>;
   signOut: () => Promise<void>;
   resetError: () => void;
 }
@@ -38,8 +38,24 @@ export function useAuth(): AuthHook {
     error: null
   });
   
+  // Get router and searchParams at the top level
   const router = useRouter();
   const searchParams = useSearchParams();
+  
+  // Use refs to store router and searchParams to avoid re-renders and timing issues
+  const routerRef = useRef<any>(null);
+  const searchParamsRef = useRef<any>(null);
+  const isRouterInitialized = useRef(false);
+
+  // Initialize router and searchParams after component mounts
+  useEffect(() => {
+    // Initialize router on client side after mounting
+    if (typeof window !== 'undefined') {
+      routerRef.current = router;
+      searchParamsRef.current = searchParams;
+      isRouterInitialized.current = true;
+    }
+  }, [router, searchParams]);
 
   // Check initial session on mount
   useEffect(() => {
@@ -77,7 +93,7 @@ export function useAuth(): AuthHook {
         // Handle redirects based on auth state
         if (session) {
           // User logged in
-          if (typeof window !== 'undefined') {
+          if (typeof window !== 'undefined' && routerRef.current) {
             const currentPath = window.location.pathname;
             const urlParams = new URLSearchParams(window.location.search);
             const redirect = urlParams.get('redirect');
@@ -85,18 +101,18 @@ export function useAuth(): AuthHook {
             // Always check for redirect parameter after login, regardless of current path
             if (redirect && currentPath.startsWith('/auth')) {
               // Redirect to the specified page
-              router.push(redirect);
+              routerRef.current.push(redirect);
             } else if (currentPath.startsWith('/auth') && !currentPath.startsWith('/auth/callback')) {
               // If on auth pages but no redirect parameter, go to chat-session
-              router.push('/chat-session');
+              routerRef.current.push('/chat-session');
             }
           }
         } else {
           // User logged out
-          if (typeof window !== 'undefined') {
+          if (typeof window !== 'undefined' && routerRef.current) {
             const currentPath = window.location.pathname;
             if (currentPath.startsWith('/chat-session') || currentPath.startsWith('/profile')) {
-              router.push('/auth/login');
+              routerRef.current.push('/auth/login');
             }
           }
         }
@@ -106,7 +122,7 @@ export function useAuth(): AuthHook {
     return () => {
       subscription.unsubscribe();
     };
-  }, [router]);
+  }, []);
 
   // Sign up with email and password
   const signUp = useCallback(async (email: string, password: string, options?: { username?: string }) => {
@@ -155,14 +171,19 @@ export function useAuth(): AuthHook {
   }, []);
 
   // Sign in with OAuth provider
-  const signInWithOAuth = useCallback(async (provider: 'google' | 'github' | 'discord') => {
+  const signInWithOAuth = useCallback(async (provider: 'google') => {
     try {
       setAuthState(prev => ({ ...prev, loading: true, error: null }));
+      
+      // Ensure router is initialized before proceeding
+      if (!isRouterInitialized.current) {
+        throw new Error('Navigation is not available at the moment. Please try again.');
+      }
       
       const { data, error } = await supabase.auth.signInWithOAuth({
         provider,
         options: {
-          redirectTo: `${window.location.origin}/auth/callback?redirect=${searchParams.get('redirect') || '/chat-session'}`
+          redirectTo: `${window.location.origin}/auth/callback?redirect=${searchParamsRef.current?.get('redirect') || '/chat-session'}`
         }
       });
 
@@ -174,7 +195,7 @@ export function useAuth(): AuthHook {
       setAuthState(prev => ({ ...prev, error: errorMessage, loading: false }));
       throw error;
     }
-  }, [searchParams]);
+  }, []);
 
   // Sign out
   const signOut = useCallback(async () => {
@@ -185,13 +206,16 @@ export function useAuth(): AuthHook {
       
       if (error) throw error;
       
-      router.push('/auth/login');
+      // Redirect to login page
+      if (routerRef.current) {
+        routerRef.current.push('/auth/login');
+      }
     } catch (error: any) {
       const errorMessage = error.message || 'Failed to sign out';
       setAuthState(prev => ({ ...prev, error: errorMessage, loading: false }));
       throw error;
     }
-  }, [router]);
+  }, []);
 
   // Reset error state
   const resetError = useCallback(() => {

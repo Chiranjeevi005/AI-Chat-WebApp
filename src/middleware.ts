@@ -1,4 +1,3 @@
-import { NextResponse } from 'next/server';
 import { NextRequest } from 'next/server';
 import { authMiddleware } from '@/lib/auth-middleware';
 

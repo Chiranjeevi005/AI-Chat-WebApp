@@ -1,12 +1,15 @@
 {
-  "name": "ai-chat-app",
+  "name": "chat-app",
   "version": "0.1.0",
   "private": true,
   "scripts": {
     "dev": "node server.js",
     "build": "next build --turbopack",
     "start": "NODE_ENV=production PORT=3003 node server.js",
-    "lint": "eslint"
+    "lint": "eslint",
+    "setup-db": "node scripts/setup-database.js",
+    "create-tables": "node scripts/create-tables.js",
+    "seed": "node scripts/seed-rooms.js"
   },
   "dependencies": {
     "@next/font": "^14.2.15",
@@ -32,6 +35,7 @@
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",
+    "dotenv": "^17.2.3",
     "eslint": "^9",
     "eslint-config-next": "15.5.2",
     "tailwindcss": "^4",
