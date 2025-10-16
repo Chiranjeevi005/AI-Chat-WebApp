@@ -80,21 +80,72 @@ export async function POST(request: Request) {
       }
     }
 
+    // Prepare room data - only include fields that we know exist
+    const roomData: any = {
+      name: name.trim()
+    };
+
+    // Try to add description if provided
+    if (description && description.trim()) {
+      roomData.description = description.trim();
+    }
+
+    // Try to add created_by - this is critical for the room creation
+    roomData.created_by = user.id;
+
     // Insert the new room
-    const { data: roomData, error: roomError } = await supabaseAdmin
+    const { data: roomDataResult, error: roomError } = await supabaseAdmin
       .from('rooms')
-      .insert([{
-        name: name.trim(),
-        description: description ? description.trim() : null,
-        created_by: user.id
-      }])
+      .insert([roomData])
       .select()
       .single();
 
     if (roomError) {
       console.error('Error creating room:', roomError);
+      
+      // If the error is about missing columns, try a fallback approach
+      if (roomError.code === '42703' || roomError.message.includes('column')) {
+        console.log('Trying fallback approach without description and created_by');
+        
+        // Fallback: try inserting with only the name field
+        const fallbackRoomData: any = {
+          name: name.trim()
+        };
+        
+        const { data: fallbackRoomDataResult, error: fallbackRoomError } = await supabaseAdmin
+          .from('rooms')
+          .insert([fallbackRoomData])
+          .select()
+          .single();
+          
+        if (fallbackRoomError) {
+          console.error('Fallback also failed:', fallbackRoomError);
+          return NextResponse.json(
+            { success: false, error: 'Failed to create room: ' + fallbackRoomError.message },
+            { status: 500 }
+          );
+        }
+        
+        // Add the creator as a room member if possible
+        try {
+          await supabaseAdmin
+            .from('room_members')
+            .insert([{
+              room_id: fallbackRoomDataResult.id,
+              user_id: user.id,
+              joined_at: new Date().toISOString()
+            }]);
+        } catch (memberError) {
+          console.error('Error adding room member:', memberError);
+          // Don't fail the room creation if we can't add the member, just log it
+        }
+        
+        // Return the created room
+        return NextResponse.json({ success: true, room: fallbackRoomDataResult });
+      }
+      
       return NextResponse.json(
-        { success: false, error: 'Failed to create room' },
+        { success: false, error: 'Failed to create room: ' + roomError.message },
         { status: 500 }
       );
     }
@@ -103,7 +154,7 @@ export async function POST(request: Request) {
     const { error: memberError } = await supabaseAdmin
       .from('room_members')
       .insert([{
-        room_id: roomData.id,
+        room_id: roomDataResult.id,
         user_id: user.id,
         joined_at: new Date().toISOString()
       }]);
@@ -114,9 +165,10 @@ export async function POST(request: Request) {
     }
 
     // Log the room creation
+    console.log('Room created successfully:', roomDataResult);
 
     // Return the created room
-    return NextResponse.json({ success: true, room: roomData });
+    return NextResponse.json({ success: true, room: roomDataResult });
   } catch (error) {
     console.error('Error in create-room API route:', error);
     return NextResponse.json(

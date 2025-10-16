@@ -37,13 +37,18 @@ export default function LoginPage() {
   // Check if user is already authenticated and redirect
   useEffect(() => {
     if (isAuthenticated && user) {
-      const redirect = searchParamsRef.current?.get('redirect');
-      // Special handling for admin user - check the authenticated user's email
-      if (user.email === 'chiranjeevi8050@gmail.com') {
-        router.push(redirect || '/admin');
-      } else {
-        router.push(redirect || '/chat-session');
-      }
+      // Add a small delay to ensure state is fully updated
+      const timer = setTimeout(() => {
+        const redirect = searchParamsRef.current?.get('redirect');
+        // Special handling for admin user - check the authenticated user's email
+        if (user.email === 'chiranjeevi8050@gmail.com') {
+          router.push(redirect || '/admin');
+        } else {
+          router.push(redirect || '/chat-session');
+        }
+      }, 100);
+      
+      return () => clearTimeout(timer);
     }
   }, [isAuthenticated, user, router]);
 
@@ -88,6 +93,17 @@ export default function LoginPage() {
     try {
       await signInWithPassword(email, password);
       // The redirect will be handled by the auth hook and the useEffect above
+      // Add a small delay to ensure state updates properly
+      setTimeout(() => {
+        if (isAuthenticated && user) {
+          const redirect = searchParamsRef.current?.get('redirect');
+          if (user.email === 'chiranjeevi8050@gmail.com') {
+            router.push(redirect || '/admin');
+          } else {
+            router.push(redirect || '/chat-session');
+          }
+        }
+      }, 300);
     } catch (err: unknown) {
       console.error('Login error:', err);
       // Provide more user-friendly error messages

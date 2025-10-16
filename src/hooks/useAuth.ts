@@ -228,13 +228,26 @@ export function useAuth(): AuthHook {
 
       if (error) throw error;
       
+      // Ensure user profile exists
+      if (data?.user) {
+        await ensureUserProfile(data.user);
+      }
+      
+      // Update auth state with the new session
+      setAuthState(prev => ({ 
+        ...prev, 
+        user: data?.user || null,
+        session: data?.session || null,
+        loading: false 
+      }));
+      
       return data;
     } catch (error: any) {
       const errorMessage = error.message || 'Failed to sign in';
       setAuthState(prev => ({ ...prev, error: errorMessage, loading: false }));
       throw error;
     }
-  }, []);
+  }, [ensureUserProfile]);
 
   // Sign in with OAuth provider
   const signInWithOAuth = useCallback(async (provider: 'google', redirectUrl?: string) => {
@@ -298,16 +311,23 @@ export function useAuth(): AuthHook {
       
       if (error) throw error;
       
-      // Redirect to login page
-      if (routerRef.current) {
-        routerRef.current.push('/auth/login');
-      }
+      // Update auth state immediately
+      setAuthState(prev => ({ 
+        ...prev, 
+        user: null,
+        session: null,
+        loading: false 
+      }));
+      
+      // Redirect to login page using Next.js router
+      router.push('/auth/login');
     } catch (error: any) {
       const errorMessage = error.message || 'Failed to sign out';
       setAuthState(prev => ({ ...prev, error: errorMessage, loading: false }));
+      console.error('Sign out error:', error);
       throw error;
     }
-  }, []);
+  }, [router]);
 
   // Reset error state
   const resetError = useCallback(() => {

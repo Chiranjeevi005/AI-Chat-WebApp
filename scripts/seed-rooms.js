@@ -1,4 +1,6 @@
-import { createClient } from '@supabase/supabase-js';
+require('dotenv').config();
+
+const { createClient } = require('@supabase/supabase-js');
 
 // Use the service role key for server-side operations
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || '';
@@ -61,8 +63,10 @@ const initialRooms = [
   }
 ];
 
-export async function seedRooms() {
+async function seedRooms() {
   try {
+    console.log('Seeding rooms...');
+    
     // Check if rooms already exist
     const { data: existingRooms, error: fetchError } = await supabaseAdmin
       .from('rooms')
@@ -74,12 +78,14 @@ export async function seedRooms() {
     
     // If rooms already exist, skip seeding
     if (existingRooms && existingRooms.length > 0) {
+      console.log('Rooms already exist, skipping seeding');
       return { success: true, message: 'Rooms already exist, skipping seeding', rooms: existingRooms };
     }
     
     // Insert initial rooms
     const roomsToInsert = initialRooms.map((room) => ({
-      name: room.name
+      name: room.name,
+      description: room.description
       // We'll set created_by to null for now since we don't have a user
       // In a real scenario, you'd want to associate this with an admin user
     }));
@@ -93,16 +99,18 @@ export async function seedRooms() {
       throw new Error(`Error inserting rooms: ${error.message}`);
     }
     
+    console.log('Successfully seeded initial rooms');
     return { success: true, message: 'Successfully seeded initial rooms', rooms: data };
   } catch (error) {
     console.error('Error seeding rooms:', error);
-    return { success: false, error: (error as Error).message };
+    return { success: false, error: error.message };
   }
 }
 
 // Run the seeding function if this file is executed directly
 if (require.main === module) {
   seedRooms().then(result => {
+    console.log(result);
     process.exit(result.success ? 0 : 1);
   });
 }

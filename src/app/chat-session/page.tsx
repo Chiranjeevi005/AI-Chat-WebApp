@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useRef, useCallback } from 'react';
+import { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import { supabase } from '@/lib/supabaseClient';
 import { useAuthContext } from '@/contexts/AuthContext';
@@ -46,7 +46,7 @@ export default function ChatSessionPage() {
   const [selectedRoomId, setSelectedRoomId] = useState<string | null>(null);
   const [messages, setMessages] = useState<Message[]>([]);
   const [newMessage, setNewMessage] = useState('');
-  const [sidebarOpen, setSidebarOpen] = useState(true);
+  const [sidebarOpen, setSidebarOpen] = useState(false); // Default to false on mobile
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
@@ -98,6 +98,12 @@ export default function ChatSessionPage() {
 
       // Fetch rooms
       await fetchRooms();
+      
+      // Restore last selected room from localStorage
+      const savedRoomId = localStorage.getItem('activeRoom');
+      if (savedRoomId) {
+        setSelectedRoomId(savedRoomId);
+      }
     } catch (err) {
       console.error('Error initializing user:', err);
       setUserRole('user');
@@ -128,14 +134,14 @@ export default function ChatSessionPage() {
       // Try to get rooms where user is a member
       let userRooms = [];
       
-      // First try the user_rooms table (new schema)
-      const { data: userRoomsData, error: userRoomsError } = await supabase
-        .from('user_rooms')
+      // Use room_members table (our schema)
+      const { data: roomMembers, error: membersError } = await supabase
+        .from('room_members')
         .select('room_id')
         .eq('user_id', session.user.id);
 
-      if (!userRoomsError && userRoomsData && userRoomsData.length > 0) {
-        const roomIds = userRoomsData.map(ur => ur.room_id);
+      if (!membersError && roomMembers && roomMembers.length > 0) {
+        const roomIds = roomMembers.map(rm => rm.room_id);
         
         const { data: roomsData, error: roomsError } = await supabase
           .from('rooms')
@@ -147,43 +153,92 @@ export default function ChatSessionPage() {
           userRooms = roomsData || [];
         }
       } else {
-        // Fallback to room_members table (older schema)
-        const { data: roomMembers, error: membersError } = await supabase
-          .from('room_members')
-          .select('room_id')
-          .eq('user_id', session.user.id);
+        // Final fallback: get all rooms (public mode) - but only for admin users
+        // For regular users, show a helpful message
+        const { data: profileData, error: profileError } = await supabase
+          .from('profiles')
+          .select('role')
+          .eq('id', session.user.id)
+          .single();
 
-        if (!membersError && roomMembers && roomMembers.length > 0) {
-          const roomIds = roomMembers.map(rm => rm.room_id);
-          
+        const isAdmin = !profileError && profileData?.role === 'admin';
+        
+        if (isAdmin) {
+          // Admins can see all rooms
           const { data: roomsData, error: roomsError } = await supabase
             .from('rooms')
             .select('*')
-            .in('id', roomIds)
             .order('created_at', { ascending: true });
 
           if (!roomsError) {
             userRooms = roomsData || [];
           }
         } else {
-          // Final fallback: get all rooms (public mode)
-          const { data: roomsData, error: roomsError } = await supabase
+          // For regular users, try to add them to existing rooms
+          const { data: allRooms, error: allRoomsError } = await supabase
             .from('rooms')
             .select('*')
             .order('created_at', { ascending: true });
 
-          if (!roomsError) {
-            userRooms = roomsData || [];
+          if (!allRoomsError && allRooms && allRooms.length > 0) {
+            // Try to add user to all rooms (this will only work if RLS allows it)
+            const roomIds = allRooms.map(room => room.id);
+            
+            // Try to insert user as member of all rooms
+            const { error: insertError } = await supabase
+              .from('room_members')
+              .insert(roomIds.map(roomId => ({
+                room_id: roomId,
+                user_id: session.user.id
+              })));
+
+            // If successful or if there's no error (user might already be a member),
+            // fetch the rooms again
+            if (!insertError) {
+              const { data: updatedRoomMembers, error: updatedMembersError } = await supabase
+                .from('room_members')
+                .select('room_id')
+                .eq('user_id', session.user.id);
+
+              if (!updatedMembersError && updatedRoomMembers && updatedRoomMembers.length > 0) {
+                const updatedRoomIds = updatedRoomMembers.map(rm => rm.room_id);
+                
+                const { data: roomsData, error: roomsError } = await supabase
+                  .from('rooms')
+                  .select('*')
+                  .in('id', updatedRoomIds)
+                  .order('created_at', { ascending: true });
+
+                if (!roomsError) {
+                  userRooms = roomsData || [];
+                }
+              }
+            } else {
+              // If we can't add the user to rooms, show all rooms anyway
+              // but with a note that they might not be able to join
+              userRooms = allRooms || [];
+            }
           }
         }
       }
       
       setRooms(userRooms);
-      if (userRooms.length > 0 && !selectedRoomId) {
-        setSelectedRoomId(userRooms[0].id);
+      
+      // If no room is selected yet, select the first one or restore from localStorage
+      if (!selectedRoomId && userRooms.length > 0) {
+        const savedRoomId = localStorage.getItem('activeRoom');
+        if (savedRoomId && userRooms.some((room: Room) => room.id === savedRoomId)) {
+          setSelectedRoomId(savedRoomId);
+        } else {
+          setSelectedRoomId(userRooms[0].id);
+        }
+      } else if (!selectedRoomId && userRooms.length === 0) {
+        // If no rooms are available, clear any saved room
+        localStorage.removeItem('activeRoom');
       }
     } catch (err) {
       console.error('Error fetching rooms:', err);
+      setError('Failed to load chat rooms. Please try again or contact an administrator.');
     } finally {
       setLoading(false);
       if (loadingTimeoutRef.current) {
@@ -191,6 +246,17 @@ export default function ChatSessionPage() {
       }
     }
   }, [session, selectedRoomId]);
+
+  // Update selected room and save to localStorage
+  const handleRoomSelect = useCallback((roomId: string) => {
+    setSelectedRoomId(roomId);
+    localStorage.setItem('activeRoom', roomId);
+    
+    // Close sidebar on mobile after selecting a room
+    if (window.innerWidth < 768) { // md breakpoint
+      setSidebarOpen(false);
+    }
+  }, [setSidebarOpen]);
 
   // Cleanup timeout on unmount
   useEffect(() => {
@@ -258,6 +324,9 @@ export default function ChatSessionPage() {
     if (!session || !selectedRoomId) return;
 
     const fetchAndSubscribe = async () => {
+      // Save selected room to localStorage
+      localStorage.setItem('activeRoom', selectedRoomId);
+      
       // Fetch initial messages
       await fetchMessages();
       
@@ -278,11 +347,20 @@ export default function ChatSessionPage() {
     };
   }, [session, selectedRoomId]);
 
-  // Fetch messages with optimized approach
+  // Fetch messages with pagination and caching
   const fetchMessages = useCallback(async () => {
     if (!session || !selectedRoomId) return;
 
     try {
+      // Check if we have cached messages for this room
+      const cachedMessages = sessionStorage.getItem(`messages_${selectedRoomId}`);
+      if (cachedMessages && messagesOffset === 0) {
+        const parsedMessages = JSON.parse(cachedMessages);
+        setMessages(parsedMessages);
+        setHasMoreMessages(parsedMessages.length === messagesLimit);
+        return;
+      }
+
       const { data, error } = await supabase
         .from('messages')
         .select(`
@@ -322,6 +400,11 @@ export default function ChatSessionPage() {
         profiles: profileMap[msg.user_id] || null
       }));
 
+      // Cache messages for this room (only for first page)
+      if (messagesOffset === 0) {
+        sessionStorage.setItem(`messages_${selectedRoomId}`, JSON.stringify(messageData.reverse()));
+      }
+
       // Set messages (reverse for correct order)
       if (messagesOffset > 0) {
         setMessages(prev => [...messageData.reverse(), ...prev]);
@@ -335,6 +418,101 @@ export default function ChatSessionPage() {
       setError('Failed to load messages. Please try again.');
     }
   }, [session, selectedRoomId, messagesOffset, messagesLimit]);
+
+  // Clear message cache when switching rooms
+  useEffect(() => {
+    if (selectedRoomId) {
+      // Clear cache for previous room
+      sessionStorage.removeItem(`messages_${selectedRoomId}`);
+    }
+  }, [selectedRoomId]);
+
+  // Send a new message with instant feedback
+  const sendMessage = useCallback(async () => {
+    if (!session || !selectedRoomId || !newMessage.trim()) return;
+
+    try {
+      setError(null);
+      
+      // Create temporary message for instant feedback
+      const tempMessage: Message = {
+        id: `temp-${Date.now()}`,
+        room_id: selectedRoomId,
+        user_id: session.user.id,
+        content: newMessage.trim(),
+        created_at: new Date().toISOString(),
+        profiles: {
+          username: user?.user_metadata?.username || 'You',
+          display_name: user?.user_metadata?.display_name || user?.user_metadata?.username || 'You'
+        }
+      };
+
+      // Add to messages immediately for instant feedback
+      setMessages(prev => [...prev, tempMessage]);
+      setNewMessage('');
+
+      // Scroll to bottom immediately
+      setTimeout(() => {
+        if (messagesEndRef.current && chatContainerRef.current) {
+          chatContainerRef.current.scrollTop = chatContainerRef.current.scrollHeight;
+        }
+      }, 10);
+
+      // Send to database
+      const { data, error } = await supabase
+        .from('messages')
+        .insert([{
+          room_id: selectedRoomId,
+          user_id: session.user.id,
+          content: newMessage.trim(),
+        }])
+        .select();
+
+      if (error) throw error;
+
+      // Replace temporary message with actual message
+      if (data && data[0]) {
+        setMessages(prev => 
+          prev.map(msg => 
+            msg.id === tempMessage.id ? {...data[0], profiles: tempMessage.profiles} : msg
+          )
+        );
+      }
+    } catch (err) {
+      console.error('Error sending message:', err);
+      setError('Failed to send message. Please try again.');
+      
+      // Remove temporary message on error
+      setMessages(prev => prev.filter(msg => !msg.id.startsWith('temp-')));
+    }
+  }, [session, selectedRoomId, newMessage, user]);
+
+  // Optimize message rendering with React.memo
+  const optimizedMessages = useMemo(() => {
+    return messages.map(msg => ({
+      ...msg,
+      // Add a stable key for React rendering
+      key: msg.id
+    }));
+  }, [messages]);
+
+  // Debounce message sending to prevent spam
+  const debouncedSendMessage = useMemo(() => {
+    return debounce(sendMessage, 300);
+  }, [sendMessage]);
+
+  // Debounce function
+  function debounce(func: Function, wait: number) {
+    let timeout: NodeJS.Timeout;
+    return function executedFunction(...args: any[]) {
+      const later = () => {
+        clearTimeout(timeout);
+        func(...args);
+      };
+      clearTimeout(timeout);
+      timeout = setTimeout(later, wait);
+    };
+  }
 
   // Subscribe to messages with optimized approach
   const subscribeToMessages = useCallback(() => {
@@ -376,10 +554,70 @@ export default function ChatSessionPage() {
           processMessageQueue();
         }
       )
+      .on(
+        'postgres_changes',
+        {
+          event: 'UPDATE',
+          schema: 'public',
+          table: 'messages',
+          filter: `room_id=eq.${selectedRoomId}`,
+        },
+        (payload) => {
+          // Handle message updates
+          setMessages(prev => prev.map(msg => 
+            msg.id === payload.new.id ? {...msg, ...payload.new} : msg
+          ));
+        }
+      )
+      .on(
+        'postgres_changes',
+        {
+          event: 'DELETE',
+          schema: 'public',
+          table: 'messages',
+          filter: `room_id=eq.${selectedRoomId}`,
+        },
+        (payload) => {
+          // Handle message deletions
+          setMessages(prev => prev.filter(msg => msg.id !== payload.old.id));
+        }
+      )
+      .on(
+        'broadcast',
+        { event: 'typing' },
+        (payload) => {
+          // Handle typing indicators
+          const { user, isTyping } = payload.payload;
+          
+          if (isTyping) {
+            // Add user to typing list
+            setTypingUsers(prev => {
+              if (!prev.includes(user)) {
+                return [...prev, user];
+              }
+              return prev;
+            });
+            
+            // Clear typing status after 3 seconds
+            if (typingTimeoutRef.current) {
+              clearTimeout(typingTimeoutRef.current);
+            }
+            
+            typingTimeoutRef.current = setTimeout(() => {
+              setTypingUsers(prev => prev.filter(u => u !== user));
+            }, 3000);
+          } else {
+            // Remove user from typing list
+            setTypingUsers(prev => prev.filter(u => u !== user));
+          }
+        }
+      )
       .subscribe((status) => {
         if (status === 'CHANNEL_ERROR') {
           console.error('Error subscribing to room messages');
           setError('Failed to subscribe to real-time updates.');
+        } else if (status === 'SUBSCRIBED') {
+          console.log(`Successfully subscribed to room-${selectedRoomId}`);
         }
       });
 
@@ -444,65 +682,51 @@ export default function ChatSessionPage() {
     }
   }, [hasMoreMessages, messagesLimit]);
 
-  // Send a new message with instant feedback
-  const sendMessage = useCallback(async () => {
-    if (!session || !selectedRoomId || !newMessage.trim()) return;
+  // Send typing indicator
+  const sendTypingIndicator = useCallback(async (isTyping: boolean) => {
+    if (!session || !selectedRoomId || !channelRef.current) return;
 
     try {
-      setError(null);
+      // Get user's display name
+      const displayName = user?.user_metadata?.display_name || 
+                         user?.user_metadata?.username || 
+                         user?.email?.split('@')[0] || 
+                         'Anonymous';
       
-      // Create temporary message for instant feedback
-      const tempMessage: Message = {
-        id: `temp-${Date.now()}`,
-        room_id: selectedRoomId,
-        user_id: session.user.id,
-        content: newMessage.trim(),
-        created_at: new Date().toISOString(),
-        profiles: {
-          username: user?.user_metadata?.username || 'You',
-          display_name: user?.user_metadata?.display_name || user?.user_metadata?.username || 'You'
+      // Broadcast typing status
+      await channelRef.current.send({
+        type: 'broadcast',
+        event: 'typing',
+        payload: {
+          user: displayName,
+          isTyping: isTyping
         }
-      };
-
-      // Add to messages immediately for instant feedback
-      setMessages(prev => [...prev, tempMessage]);
-      setNewMessage('');
-
-      // Scroll to bottom immediately
-      setTimeout(() => {
-        if (messagesEndRef.current && chatContainerRef.current) {
-          chatContainerRef.current.scrollTop = chatContainerRef.current.scrollHeight;
-        }
-      }, 10);
-
-      // Send to database
-      const { data, error } = await supabase
-        .from('messages')
-        .insert([{
-          room_id: selectedRoomId,
-          user_id: session.user.id,
-          content: newMessage.trim(),
-        }])
-        .select();
-
-      if (error) throw error;
-
-      // Replace temporary message with actual message
-      if (data && data[0]) {
-        setMessages(prev => 
-          prev.map(msg => 
-            msg.id === tempMessage.id ? {...data[0], profiles: tempMessage.profiles} : msg
-          )
-        );
-      }
+      });
     } catch (err) {
-      console.error('Error sending message:', err);
-      setError('Failed to send message. Please try again.');
-      
-      // Remove temporary message on error
-      setMessages(prev => prev.filter(msg => !msg.id.startsWith('temp-')));
+      console.error('Error sending typing indicator:', err);
     }
-  }, [session, selectedRoomId, newMessage, user]);
+  }, [session, selectedRoomId, user]);
+
+  // Handle input change with typing indicator
+  const handleInputChange = useCallback((e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    setNewMessage(e.target.value);
+    
+    // Send typing indicator
+    if (e.target.value.trim()) {
+      sendTypingIndicator(true);
+    } else {
+      sendTypingIndicator(false);
+    }
+    
+    // Clear typing indicator after 1 second of inactivity
+    if (typingTimeoutRef.current) {
+      clearTimeout(typingTimeoutRef.current);
+    }
+    
+    typingTimeoutRef.current = setTimeout(() => {
+      sendTypingIndicator(false);
+    }, 1000);
+  }, [setNewMessage, sendTypingIndicator]);
 
   // Create a new room
   const createRoom = useCallback(async (roomName: string, roomDescription: string) => {
@@ -677,12 +901,12 @@ export default function ChatSessionPage() {
     return (
       <div 
         ref={pageRef}
-        className="h-screen w-screen flex items-center justify-center bg-gradient-to-br from-gray-900 to-black"
+        className="h-screen w-full flex items-center justify-center bg-gradient-to-br from-gray-900 to-black"
       >
         <div className="text-center">
-          <div className="w-16 h-16 border-4 border-cyan-500 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-          <p className="text-gray-300">Loading chat session...</p>
-          <p className="text-gray-500 text-sm mt-2">Please wait while we connect you to the chat service</p>
+          <div className="w-12 h-12 sm:w-16 sm:h-16 border-4 border-cyan-500 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+          <p className="text-gray-300 text-sm sm:text-base">Loading chat session...</p>
+          <p className="text-gray-500 text-xs sm:text-sm mt-2">Please wait while we connect you to the chat service</p>
         </div>
       </div>
     );
@@ -693,24 +917,59 @@ export default function ChatSessionPage() {
     return (
       <div 
         ref={pageRef}
-        className="h-screen w-screen flex items-center justify-center bg-gradient-to-br from-gray-900 to-black"
+        className="h-screen w-full flex items-center justify-center bg-gradient-to-br from-gray-900 to-black"
       >
-        <div className="text-center p-6 bg-gray-800/50 rounded-xl border border-gray-700 max-w-md">
-          <div className="text-red-400 text-2xl mb-2">⚠️</div>
-          <h2 className="text-xl font-bold text-white mb-2">Error</h2>
-          <p className="text-gray-300 mb-4 text-sm">{error}</p>
+        <div className="text-center p-4 sm:p-6 bg-gray-800/50 rounded-xl border border-gray-700 max-w-xs sm:max-w-md">
+          <div className="text-red-400 text-xl sm:text-2xl mb-2">⚠️</div>
+          <h2 className="text-lg sm:text-xl font-bold text-white mb-2">Error</h2>
+          <p className="text-gray-300 mb-4 text-xs sm:text-sm">{error}</p>
           <div className="flex flex-col sm:flex-row gap-2 justify-center">
             <button
               onClick={() => window.location.reload()}
-              className="px-4 py-2 bg-cyan-600 hover:bg-cyan-700 text-white rounded-lg transition-colors text-sm"
+              className="px-3 py-2 sm:px-4 sm:py-2 bg-cyan-600 hover:bg-cyan-700 text-white rounded-lg transition-colors text-xs sm:text-sm"
             >
               Retry
             </button>
             <button
               onClick={() => router.push('/')}
-              className="px-4 py-2 bg-gray-600 hover:bg-gray-700 text-white rounded-lg transition-colors text-sm"
+              className="px-3 py-2 sm:px-4 sm:py-2 bg-gray-600 hover:bg-gray-700 text-white rounded-lg transition-colors text-xs sm:text-sm"
             >
               Go Home
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // No rooms state
+  if (rooms.length === 0 && !loading) {
+    return (
+      <div 
+        ref={pageRef}
+        className="h-screen w-full flex items-center justify-center bg-gradient-to-br from-gray-900 to-black"
+      >
+        <div className="text-center p-4 sm:p-6 bg-gray-800/50 rounded-xl border border-gray-700 max-w-xs sm:max-w-md">
+          <div className="text-cyan-400 text-xl sm:text-2xl mb-2">💬</div>
+          <h2 className="text-lg sm:text-xl font-bold text-white mb-2">No Chat Rooms Available</h2>
+          <p className="text-gray-300 mb-4 text-xs sm:text-sm">
+            {error || 'It looks like there are no chat rooms available for you yet.'}
+          </p>
+          <p className="text-gray-400 text-xs sm:text-sm mb-4">
+            Contact an administrator to be added to existing rooms or check back later.
+          </p>
+          <div className="flex flex-col sm:flex-row gap-2 justify-center">
+            <button
+              onClick={() => window.location.reload()}
+              className="px-3 py-2 sm:px-4 sm:py-2 bg-cyan-600 hover:bg-cyan-700 text-white rounded-lg transition-colors text-xs sm:text-sm"
+            >
+              Refresh
+            </button>
+            <button
+              onClick={handleLogout}
+              className="px-3 py-2 sm:px-4 sm:py-2 bg-gray-600 hover:bg-gray-700 text-white rounded-lg transition-colors text-xs sm:text-sm"
+            >
+              Logout
             </button>
           </div>
         </div>
@@ -721,30 +980,30 @@ export default function ChatSessionPage() {
   return (
     <div 
       ref={pageRef}
-      className="h-screen w-screen bg-gradient-to-br from-gray-900 to-black overflow-hidden"
+      className="h-screen w-full bg-gradient-to-br from-gray-900 to-black overflow-hidden flex flex-col"
     >
       {/* Success notification */}
       {success && (
-        <div className="fixed top-4 right-4 z-50 bg-green-600 text-white px-4 py-2 rounded-lg shadow-lg animate-fadeIn">
+        <div className="fixed top-2 sm:top-4 right-2 sm:right-4 z-50 bg-green-600 text-white px-3 py-2 sm:px-4 sm:py-2 rounded-lg shadow-lg animate-fadeIn text-xs sm:text-sm">
           {success}
         </div>
       )}
       
       {/* Error notification */}
       {error && (
-        <div className="fixed top-4 right-4 z-50 bg-red-600 text-white px-4 py-2 rounded-lg shadow-lg animate-fadeIn">
+        <div className="fixed top-2 sm:top-4 right-2 sm:right-4 z-50 bg-red-600 text-white px-3 py-2 sm:px-4 sm:py-2 rounded-lg shadow-lg animate-fadeIn text-xs sm:text-sm">
           {error}
         </div>
       )}
       
-      {/* Grid-based responsive layout */}
-      <div className="grid grid-cols-12 h-full">
-        {/* Sidebar - Desktop: 25% (col-span-3), Tablet/Mobile: hidden by default */}
+      {/* Main content area - flex column for mobile, flex row for desktop */}
+      <div className="flex flex-1 overflow-hidden">
+        {/* Sidebar - Hidden by default on mobile, shown on desktop */}
         <aside 
           ref={sidebarRef}
-          className={`hidden lg:block lg:col-span-3 bg-gradient-to-b from-slate-900 to-slate-800 h-full ${
+          className={`absolute md:relative z-30 md:z-0 w-64 md:w-80 h-full bg-gradient-to-b from-slate-900 to-slate-800 transform transition-transform duration-300 ease-in-out ${
             sidebarOpen ? 'translate-x-0' : '-translate-x-full'
-          } transition-transform duration-300 ease-in-out z-20 absolute lg:relative`}
+          } md:translate-x-0 flex-shrink-0`}
         >
           <RoomSidebar 
             sidebarOpen={sidebarOpen} 
@@ -759,8 +1018,16 @@ export default function ChatSessionPage() {
           />
         </aside>
         
-        {/* Main Chat Area - Desktop: 75% (col-span-9), Tablet: 100% (col-span-12), Mobile: 100% (col-span-12) */}
-        <main className="col-span-12 lg:col-span-9 bg-slate-950 h-full flex flex-col relative">
+        {/* Overlay for mobile when sidebar is open */}
+        {sidebarOpen && (
+          <div 
+            className="fixed inset-0 bg-black bg-opacity-50 z-20 md:hidden"
+            onClick={() => setSidebarOpen(false)}
+          ></div>
+        )}
+        
+        {/* Main Chat Area - Takes full width on mobile, expands on desktop */}
+        <main className="flex-1 flex flex-col h-full relative overflow-hidden">
           {selectedRoomId ? (
             <ChatArea 
               messages={formattedMessages}
@@ -777,29 +1044,23 @@ export default function ChatSessionPage() {
               hasMoreMessages={hasMoreMessages}
               isTyping={isTyping}
               typingUsers={typingUsers}
+              handleInputChange={handleInputChange}
+              // Add new props for room selection
+              rooms={rooms}
+              selectedRoomId={selectedRoomId}
+              setSelectedRoomId={handleRoomSelect}
             />
           ) : (
-            <div className="h-full flex items-center justify-center text-gray-400">
+            <div className="h-full flex items-center justify-center text-gray-400 p-4">
               <div className="text-center">
-                <div className="text-2xl mb-2">👋</div>
-                <p className="text-lg">Select a room to start chatting</p>
-                <p className="text-sm mt-2">or create a new room</p>
+                <div className="text-xl sm:text-2xl mb-2">👋</div>
+                <p className="text-base sm:text-lg">Select a room to start chatting</p>
+                <p className="text-xs sm:text-sm mt-2">or create a new room</p>
               </div>
             </div>
           )}
         </main>
       </div>
-      
-      {/* Floating button for mobile/tablet */}
-      <div className="fixed bottom-6 left-6 z-30">
-        <button 
-          onClick={toggleSidebar}
-          className="lg:hidden w-14 h-14 rounded-full bg-gradient-to-r from-cyan-600 to-blue-600 text-white shadow-lg flex items-center justify-center"
-        >
-          <span className="text-xl">_rooms</span>
-        </button>
-      </div>
-      
       <div ref={messagesEndRef} />
     </div>
   );

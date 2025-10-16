@@ -22,6 +22,14 @@ interface TeamMember {
   color: string;
 }
 
+interface Room {
+  id: string;
+  name: string;
+  description?: string;
+  created_at: string;
+  created_by: string;
+}
+
 interface ChatAreaProps {
   messages: Message[];
   addMessage: (message: Message) => void;
@@ -37,6 +45,11 @@ interface ChatAreaProps {
   hasMoreMessages?: boolean;
   isTyping?: boolean;
   typingUsers?: string[];
+  handleInputChange?: (e: React.ChangeEvent<HTMLTextAreaElement>) => void;
+  // Add new props for room selection
+  rooms?: Room[];
+  selectedRoomId?: string | null;
+  setSelectedRoomId?: (id: string) => void;
 }
 
 export default function ChatArea({
@@ -53,7 +66,12 @@ export default function ChatArea({
   loadMoreMessages = () => {},
   hasMoreMessages = false,
   isTyping = false,
-  typingUsers = []
+  typingUsers = [],
+  handleInputChange = () => {},
+  // Destructure new props
+  rooms = [],
+  selectedRoomId = null,
+  setSelectedRoomId = () => {}
 }: ChatAreaProps) {
   const [currentSpeaker, setCurrentSpeaker] = useState('');
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
@@ -101,10 +119,10 @@ export default function ChatArea({
   
   useEffect(() => {
     // Scroll to bottom when messages change (only for new messages, not when loading history)
-    if (messagesEndRef.current && chatContainerRef.current && scrollPositionRef.current === 0) {
-      // Use native scroll with smooth behavior instead of GSAP scrollTo plugin
+    if (messages.length > 0 && messagesEndRef.current && chatContainerRef.current && scrollPositionRef.current === 0) {
+      // Use smooth scrolling for better UX
       chatContainerRef.current.scrollTo({
-        top: messagesEndRef.current.offsetTop,
+        top: chatContainerRef.current.scrollHeight,
         behavior: 'smooth'
       });
     }
@@ -117,21 +135,17 @@ export default function ChatArea({
       const messageElement = messageElementsRef.current.get(lastMessage.id);
       
       if (messageElement) {
-        // Animate with GSAP for smooth entrance
-        gsap.fromTo(messageElement,
-          { opacity: 0, y: 20, scale: 0.95 },
-          { 
-            opacity: 1, 
-            y: 0, 
-            scale: 1,
-            duration: 0.4, 
-            ease: 'back.out(1.4)',
-            onStart: () => {
-              // Ensure the message is visible
-              messageElement.style.visibility = 'visible';
-            }
-          }
-        );
+        // Reset animation properties
+        messageElement.style.opacity = '0';
+        messageElement.style.transform = 'translateY(20px) scale(0.95)';
+        messageElement.style.visibility = 'visible';
+        
+        // Animate with CSS transitions for better performance
+        requestAnimationFrame(() => {
+          messageElement.style.transition = 'all 0.4s cubic-bezier(0.68, -0.55, 0.27, 1.55)';
+          messageElement.style.opacity = '1';
+          messageElement.style.transform = 'translateY(0) scale(1)';
+        });
       }
     }
   }, [messages]);
@@ -186,16 +200,8 @@ export default function ChatArea({
     }
   };
   
-  const handleInputChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
-    setNewMessage(e.target.value);
-    
-    // Auto-resize textarea
-    if (textareaRef.current) {
-      textareaRef.current.style.height = 'auto';
-      textareaRef.current.style.height = `${Math.min(textareaRef.current.scrollHeight, 150)}px`;
-    }
-  };
-  
+  // Remove the old handleInputChange function and use the one passed from props
+
   const handleEmojiSelect = (emoji: string) => {
     const newMessageValue = newMessage + emoji;
     setNewMessage(newMessageValue);
@@ -209,19 +215,33 @@ export default function ChatArea({
   
   // Format message text with basic markdown
   const formatMessage = (text: string) => {
-    // Bold text: **text**
-    text = text.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+    // Store original text for debugging
+    const originalText = text;
     
-    // Italic text: *text*
-    text = text.replace(/\*(.*?)\*/g, '<em>$1</em>');
-    
-    // Links: [text](url)
-    text = text.replace(/\[(.*?)\]\((.*?)\)/g, '<a href="$2" target="_blank" class="text-cyan-300 hover:underline">$1</a>');
-    
-    // Line breaks
-    text = text.replace(/\n/g, '<br>');
-    
-    return text;
+    try {
+      // Process markdown with better handling of nested formatting
+      
+      // First, process links to avoid interference with other formatting
+      // Links: [text](url)
+      text = text.replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" target="_blank" class="text-cyan-300 hover:underline" rel="noopener noreferrer">$1</a>');
+      
+      // Then process bold formatting
+      // Bold text: **text**
+      text = text.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+      
+      // Finally process italic formatting
+      // Italic text: *text*
+      text = text.replace(/\*([^\*]*?)\*/g, '<em>$1</em>');
+      
+      // Convert line breaks
+      text = text.replace(/\n/g, '<br>');
+      
+      return text;
+    } catch (error) {
+      console.error('Error formatting message:', error, 'Original text:', originalText);
+      // Return original text if formatting fails
+      return originalText.replace(/\n/g, '<br>');
+    }
   };
   
   // Get status indicator icon
@@ -260,22 +280,44 @@ export default function ChatArea({
   return (
     <div className="flex flex-col h-full chat-area">
       {/* Chat Header */}
-      <div className="bg-gray-800 bg-opacity-50 glass p-4 border-b border-gray-700 flex items-center chat-header flex-shrink-0">
+      <div className="bg-gray-800 bg-opacity-50 glass p-3 sm:p-4 border-b border-gray-700 flex items-center chat-header flex-shrink-0">
         <button 
           onClick={toggleSidebar}
-          className="lg:hidden mr-4 text-gray-400 hover:text-white transition-colors duration-200"
+          className="md:hidden mr-3 sm:mr-4 text-gray-400 hover:text-white transition-colors duration-200"
         >
-          <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 sm:h-6 sm:w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
           </svg>
         </button>
-        <h2 className="text-xl font-bold">Design Team</h2>
-        <div className="ml-2 w-2 h-2 rounded-full bg-green-500 animate-pulse"></div>
-        <div className="ml-2 text-xs text-gray-400">Live</div>
         
-        <div className="ml-auto flex space-x-4">
-          <button className="text-gray-400 hover:text-white transition-colors duration-200">
-            <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        {/* Room selection dropdown for mobile */}
+        <div className="md:hidden relative flex-1 mr-2">
+          <select 
+            value={selectedRoomId || ''}
+            onChange={(e) => {
+              setSelectedRoomId(e.target.value);
+            }}
+            className="w-full bg-gray-700 text-white rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-cyan-500"
+          >
+            {rooms.map((room: Room) => (
+              <option key={room.id} value={room.id}>
+                {room.name}
+              </option>
+            ))}
+          </select>
+        </div>
+        
+        {/* Room name for desktop */}
+        <h2 className="text-lg sm:text-xl font-bold hidden md:block">
+          {rooms.find((room: Room) => room.id === selectedRoomId)?.name || 'Select a Room'}
+        </h2>
+        
+        <div className="ml-2 w-2 h-2 rounded-full bg-green-500 animate-pulse"></div>
+        <div className="ml-2 text-xs text-gray-400 hidden sm:block">Live</div>
+        
+        <div className="ml-auto flex space-x-3 sm:space-x-4">
+          <button className="text-gray-400 hover:text-white transition-colors duration-200 hidden sm:block">
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 sm:h-6 sm:w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
             </svg>
           </button>
@@ -283,7 +325,7 @@ export default function ChatArea({
             onClick={handleLogout}
             className="text-gray-400 hover:text-white transition-colors duration-200"
           >
-            <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 sm:h-6 sm:w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
             </svg>
           </button>
@@ -293,12 +335,12 @@ export default function ChatArea({
       {/* Messages Container */}
       <div 
         ref={chatContainerRef}
-        className="flex-1 overflow-y-auto p-4 sm:p-6 bg-gradient-to-b from-gray-900 to-gray-800 relative"
+        className="flex-1 overflow-y-auto p-3 sm:p-4 md:p-6 bg-gradient-to-b from-gray-900 to-gray-800 relative"
       >
         {/* Loading indicator for infinite scroll */}
         {hasMoreMessages && (
-          <div className="flex justify-center py-4">
-            <div className="w-8 h-8 border-4 border-cyan-500 border-t-transparent rounded-full animate-spin"></div>
+          <div className="flex justify-center py-3 sm:py-4">
+            <div className="w-6 h-6 sm:w-8 sm:h-8 border-4 border-cyan-500 border-t-transparent rounded-full animate-spin"></div>
           </div>
         )}
         
@@ -312,11 +354,11 @@ export default function ChatArea({
                 messageElementsRef.current.delete(message.id);
               }
             }}
-            className={`mb-4 sm:mb-6 flex ${message.self ? 'justify-end' : 'justify-start'}`}
+            className={`mb-3 sm:mb-4 md:mb-6 flex ${message.self ? 'justify-end' : 'justify-start'}`}
             style={{ visibility: 'hidden' }} // Hidden until animation starts
           >
             <div 
-              className={`max-w-xs sm:max-w-md md:max-w-lg px-4 py-2 sm:px-5 sm:py-3 rounded-2xl message-bubble relative ${
+              className={`max-w-xs sm:max-w-sm md:max-w-md lg:max-w-lg px-3 py-2 sm:px-4 sm:py-3 rounded-2xl message-bubble relative ${
                 message.isAI 
                   ? 'bg-gradient-to-r from-purple-700 to-violet-700 text-white rounded-br-none glow-violet' 
                   : message.self 
@@ -325,12 +367,12 @@ export default function ChatArea({
               }`}
             >
               {!message.self && (
-                <div className="font-semibold text-sm mb-1 text-cyan-300">
+                <div className="font-semibold text-xs sm:text-sm mb-1 text-cyan-300">
                   {message.user} {message.isAI && '🤖'}
                 </div>
               )}
               <div 
-                className="mb-1 text-sm sm:text-base"
+                className="mb-1 text-sm"
                 dangerouslySetInnerHTML={{ __html: formatMessage(message.text) }}
               ></div>
               <div 
@@ -359,9 +401,9 @@ export default function ChatArea({
         
         {/* Typing indicator */}
         {(isTyping || typingUsers.length > 0) && (
-          <div className="flex justify-start mb-4 sm:mb-6">
-            <div className="bg-gray-700 text-white rounded-2xl rounded-bl-none px-4 py-2 sm:px-5 sm:py-3">
-              <div className="font-semibold text-sm mb-1 text-cyan-300">
+          <div className="flex justify-start mb-3 sm:mb-4 md:mb-6">
+            <div className="bg-gray-700 text-white rounded-2xl rounded-bl-none px-3 py-2 sm:px-4 sm:py-3">
+              <div className="font-semibold text-xs sm:text-sm mb-1 text-cyan-300">
                 {typingUsers.length > 0 ? typingUsers.join(', ') : 'Someone'} is typing
               </div>
               <div className="flex items-center">
@@ -382,15 +424,10 @@ export default function ChatArea({
           <div className="flex items-center mr-2 sm:mr-3">
             <button 
               onClick={() => setShowEmojiPicker(!showEmojiPicker)}
-              className="text-gray-400 hover:text-white p-1 sm:p-2 rounded-full hover:bg-gray-700 transition-all duration-200"
+              className="text-gray-400 hover:text-white p-1 rounded-full hover:bg-gray-700 transition-all duration-200"
             >
               <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 sm:h-5 sm:w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14.828 14.828a4 4 0 01-5.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-              </svg>
-            </button>
-            <button className="text-gray-400 hover:text-white p-1 sm:p-2 rounded-full hover:bg-gray-700 transition-all duration-200">
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 sm:h-5 sm:w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13" />
               </svg>
             </button>
           </div>
@@ -398,10 +435,10 @@ export default function ChatArea({
             <textarea
               ref={textareaRef}
               value={newMessage}
-              onChange={handleInputChange}
+              onChange={handleInputChange} 
               onKeyDown={handleKeyPress}
-              placeholder="Type a message... (**bold**, *italic*, [link](url))"
-              className="w-full bg-gray-700 text-white rounded-2xl px-3 py-2 sm:px-4 sm:py-3 pr-10 sm:pr-12 focus:outline-none focus:ring-2 focus:ring-cyan-500 resize-none text-sm sm:text-base max-h-40 transition-all duration-200"
+              placeholder="Type a message..."
+              className="w-full bg-gray-700 text-white rounded-2xl px-3 py-2 sm:px-4 sm:py-3 pr-10 focus:outline-none focus:ring-2 focus:ring-cyan-500 resize-none text-sm max-h-32 transition-all duration-200"
               rows={1}
             />
             <button 
@@ -413,19 +450,16 @@ export default function ChatArea({
                   : 'text-gray-500 scale-90'
               }`}
             >
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 sm:h-6 sm:w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 sm:h-5 sm:w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
               </svg>
             </button>
           </div>
         </div>
-        <div className="text-xs text-gray-500 mt-1 ml-1 hidden sm:block transition-opacity duration-300">
-          Markdown supported: **bold**, *italic*, [link](url)
-        </div>
-        
+      
         {/* Emoji Picker */}
         {showEmojiPicker && (
-          <div className="absolute bottom-full right-0 mb-2 transition-all duration-300 ease-out">
+          <div className="absolute bottom-full right-0 mb-2 transition-all duration-300 ease-out z-10">
             <EmojiPicker 
               onEmojiSelect={handleEmojiSelect}
               onClose={() => setShowEmojiPicker(false)}

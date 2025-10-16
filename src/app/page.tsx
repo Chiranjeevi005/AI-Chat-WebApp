@@ -357,7 +357,7 @@ export default function Home() {
   return (
     <div 
       ref={containerRef}
-      className="relative min-h-screen w-full flex flex-col items-center justify-center overflow-hidden bg-gradient-to-br from-[rgb(var(--gradient-start))] to-[rgb(var(--gradient-end))]"
+      className="relative min-h-screen w-full flex flex-col items-center justify-center overflow-hidden bg-gradient-to-br from-[rgb(var(--gradient-start))] to-[rgb(var(--gradient-end))] px-4 py-8"
     >
       {/* Animated background particles */}
       <div ref={particlesRef} className="absolute inset-0 overflow-hidden">
@@ -376,51 +376,57 @@ export default function Home() {
       </div>
       
       {/* Glowing orbs with subtle pulsing */}
-      <div className="absolute top-1/4 left-1/4 w-64 h-64 bg-cyan-500/10 rounded-full blur-3xl animate-pulse" style={{ animationDuration: '8s' }}></div>
-      <div className="absolute bottom-1/3 right-1/4 w-64 h-64 bg-purple-500/10 rounded-full blur-3xl animate-pulse" style={{ animationDuration: '10s' }}></div>
-      <div className="absolute top-1/3 right-1/3 w-48 h-48 bg-violet-500/15 rounded-full blur-3xl animate-pulse" style={{ animationDuration: '12s' }}></div>
+      <div className="absolute top-1/4 left-1/4 w-64 h-64 bg-cyan-500/10 rounded-full blur-3xl animate-pulse hidden sm:block" style={{ animationDuration: '8s' }}></div>
+      <div className="absolute bottom-1/3 right-1/4 w-64 h-64 bg-purple-500/10 rounded-full blur-3xl animate-pulse hidden sm:block" style={{ animationDuration: '10s' }}></div>
+      <div className="absolute top-1/3 right-1/3 w-48 h-48 bg-violet-500/15 rounded-full blur-3xl animate-pulse hidden md:block" style={{ animationDuration: '12s' }}></div>
       
       {/* Main content with smooth fade-in animation */}
       <div 
         ref={contentRef}
-        className="relative z-10 text-center px-4 max-w-4xl flex flex-col items-center opacity-0"
+        className="relative z-10 text-center w-full max-w-4xl flex flex-col items-center opacity-0 px-4"
       >
-        <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-white mb-6 leading-tight">
-          Chat Beyond Limits — Real-time Conversations.
+        <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold text-white mb-4 sm:mb-6 leading-tight">
+          <span className="bg-gradient-to-r from-cyan-400 to-blue-500 bg-clip-text text-transparent">
+            Chat Beyond Limits —
+          </span>
+          <br />
+          <span className="text-white">
+            Real-time Conversations.
+          </span>
         </h1>
         
-        <p className="text-lg md:text-xl text-gray-300 max-w-2xl mx-auto mb-12 font-light leading-relaxed">
+        <p className="text-base sm:text-lg md:text-xl text-gray-300 max-w-2xl mx-auto mb-8 sm:mb-12 font-light leading-relaxed">
           Step into a real-time chat experience with seamless communication.
           Connect with others instantly and effortlessly.
         </p>
         
-        <div className="flex justify-center w-full">
+        <div className="flex justify-center w-full max-w-md">
           <button
             ref={buttonRef}
             onClick={handleStartChatting}
             disabled={isLoading}
-            className="relative px-10 py-5 bg-gradient-to-r from-cyan-600 to-blue-600 text-white font-bold text-xl rounded-2xl shadow-2xl hover:shadow-cyan-500/30 transition-all duration-300 flex items-center justify-center group border border-cyan-500/30 overflow-hidden hover:scale-105 focus:outline-none focus:ring-2 focus:ring-cyan-400 focus:ring-opacity-50 glow-cyan"
+            className="relative w-full sm:w-auto px-8 py-4 sm:px-10 sm:py-5 bg-gradient-to-r from-cyan-600 to-blue-600 text-white font-bold text-lg sm:text-xl rounded-2xl shadow-2xl hover:shadow-cyan-500/30 transition-all duration-300 flex items-center justify-center group border border-cyan-500/30 overflow-hidden hover:scale-105 focus:outline-none focus:ring-2 focus:ring-cyan-400 focus:ring-opacity-50 glow-cyan"
           >
             <span className="absolute inset-0 bg-gradient-to-r from-cyan-500/20 to-blue-500/20 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></span>
             <span className="relative flex items-center">
               {isLoading ? (
                 <div className="flex items-center">
                   <div className="flex items-center">
-                    <div className="relative mr-3">
-                      <div className="w-10 h-10 rounded-full overflow-hidden border-2 border-cyan-500/30">
+                    <div className="relative mr-2 sm:mr-3">
+                      <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-full overflow-hidden border-2 border-cyan-500/30">
                         {/* Using a simple animated circle instead of image for loader */}
                         <div className="w-full h-full rounded-full border-4 border-cyan-500 border-t-transparent animate-spin"></div>
                       </div>
-                      <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-6 h-6 bg-gradient-to-r from-cyan-500/20 to-blue-500/20 rounded-full animate-ping"></div>
+                      <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-4 h-4 sm:w-6 sm:h-6 bg-gradient-to-r from-cyan-500/20 to-blue-500/20 rounded-full animate-ping"></div>
                     </div>
-                    <span>Initializing Chat Interface...</span>
+                    <span className="text-sm sm:text-base">Initializing Chat Interface...</span>
                   </div>
                 </div>
               ) : (
                 <>
                   Start Chatting 🚀
                   <svg 
-                    className="ml-3 w-6 h-6 transition-transform group-hover:translate-x-1" 
+                    className="ml-2 sm:ml-3 w-5 h-5 sm:w-6 sm:h-6 transition-transform group-hover:translate-x-1" 
                     fill="none" 
                     stroke="currentColor" 
                     viewBox="0 0 24 24" 
@@ -434,7 +440,7 @@ export default function Home() {
           </button>
         </div>
         
-        <p className="text-sm text-gray-400 mt-6">
+        <p className="text-xs sm:text-sm text-gray-400 mt-4 sm:mt-6">
           Step into the future of conversations — where people connect instantly.
         </p>
       </div>

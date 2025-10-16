@@ -41,12 +41,14 @@ export default function RootLayout({
       lang="en" 
       className={`${inter.variable} ${spaceGrotesk.variable} ${poppins.variable}`}
     >
-      <body className="font-sans">
+      <body className="font-sans w-full h-screen overflow-x-hidden">
         <AuthProvider>
-          <Navbar />
-          <main className="pt-20">
-            {children}
-          </main>
+          <div className="flex flex-col h-screen w-full">
+            <Navbar />
+            <main className="flex-1 pt-16 md:pt-20 w-full">
+              {children}
+            </main>
+          </div>
         </AuthProvider>
       </body>
     </html>

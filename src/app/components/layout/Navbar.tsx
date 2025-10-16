@@ -36,10 +36,22 @@ export default function Navbar() {
     };
   }, []);
 
+  const handleLogout = async () => {
+    try {
+      await signOut();
+      // Close mobile menu after logout
+      setIsMenuOpen(false);
+    } catch (error) {
+      console.error('Logout failed:', error);
+      // Even if there's an error, close the menu
+      setIsMenuOpen(false);
+    }
+  };
+
   return (
     <nav
       className={`fixed w-full z-50 transition-all duration-300 ${
-        scrolled ? 'py-3 bg-gray-900 bg-opacity-90 backdrop-blur-md' : 'py-6 bg-transparent'
+        scrolled ? 'py-2 sm:py-3 bg-gray-900 bg-opacity-90 backdrop-blur-md' : 'py-4 sm:py-6 bg-transparent'
       }`}
     >
       <div className="container mx-auto px-4">
@@ -47,10 +59,10 @@ export default function Navbar() {
           {/* Logo */}
           <div className="navbar-item flex items-center">
             <Link href="/" className="flex items-center">
-              <div className="w-12 h-12 rounded-full mr-3">
-                <Image src="/assets/logo.png" alt="Chat App Logo" width={48} height={48} className="rounded-full" />
+              <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-full mr-2 sm:mr-3">
+                <Image src="/assets/logo.png" alt="Chat App Logo" width={40} height={40} className="rounded-full w-10 h-10 sm:w-12 sm:h-12" />
               </div>
-              <span className="text-2xl font-bold text-white">Chat App</span>
+              <span className="text-xl sm:text-2xl font-bold text-white">Chat App</span>
             </Link>
           </div>
 
@@ -60,15 +72,15 @@ export default function Navbar() {
           </div>
 
           {/* Auth Buttons */}
-          <div className="navbar-item hidden md:flex space-x-4 items-center">
+          <div className="navbar-item hidden md:flex space-x-3 sm:space-x-4 items-center">
             {user ? (
               <>
-                <span className="text-white font-medium mr-2">
+                <span className="text-white font-medium mr-2 text-sm sm:text-base">
                   Hello, {user.user_metadata?.full_name || user.email?.split('@')[0] || 'User'}
                 </span>
                 <button
-                  onClick={() => signOut()}
-                  className="px-6 py-2 bg-gradient-to-r from-red-500 to-red-700 text-white font-medium rounded-full hover:from-red-600 hover:to-red-800 transition-all duration-300 transform hover:scale-105"
+                  onClick={handleLogout}
+                  className="px-4 py-2 sm:px-6 sm:py-2 bg-gradient-to-r from-red-500 to-red-700 text-white font-medium rounded-full hover:from-red-600 hover:to-red-800 transition-all duration-300 transform hover:scale-105 text-sm sm:text-base"
                 >
                   Logout
                 </button>
@@ -76,7 +88,7 @@ export default function Navbar() {
             ) : (
               <Link
                 href="/auth/login"
-                className="px-6 py-2 bg-gradient-to-r from-cyan-500 to-blue-500 text-white font-medium rounded-full hover:from-cyan-600 hover:to-blue-600 transition-all duration-300 transform hover:scale-105 glow-cyan"
+                className="px-4 py-2 sm:px-6 sm:py-2 bg-gradient-to-r from-cyan-500 to-blue-500 text-white font-medium rounded-full hover:from-cyan-600 hover:to-blue-600 transition-all duration-300 transform hover:scale-105 glow-cyan text-sm sm:text-base"
               >
                 Get Started
               </Link>
@@ -90,11 +102,11 @@ export default function Navbar() {
               className="text-gray-300 hover:text-white focus:outline-none"
             >
               {isMenuOpen ? (
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 sm:h-8 sm:w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
                 </svg>
               ) : (
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 sm:h-8 sm:w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
                 </svg>
               )}
@@ -104,21 +116,18 @@ export default function Navbar() {
 
         {/* Mobile Menu - removed all items as requested */}
         {isMenuOpen && (
-          <div className="md:hidden mt-4 py-4 border-t border-gray-800">
-            <div className="flex flex-col space-y-4">
+          <div className="md:hidden mt-3 sm:mt-4 py-3 sm:py-4 border-t border-gray-800">
+            <div className="flex flex-col space-y-3 sm:space-y-4">
               {/* Navigation items removed as per request */}
-              <div className="flex flex-col space-y-3 pt-4 border-t border-gray-800">
+              <div className="flex flex-col space-y-2 sm:space-y-3 pt-3 sm:pt-4 border-t border-gray-800">
                 {user ? (
                   <>
-                    <div className="px-6 py-3 text-white font-medium text-center">
+                    <div className="px-4 sm:px-6 py-2 sm:py-3 text-white font-medium text-center text-sm sm:text-base">
                       Hello, {user.user_metadata?.full_name || user.email?.split('@')[0] || 'User'}
                     </div>
                     <button
-                      onClick={() => {
-                        signOut();
-                        setIsMenuOpen(false);
-                      }}
-                      className="px-6 py-3 bg-gradient-to-r from-red-500 to-red-700 text-white font-medium rounded-full hover:from-red-600 hover:to-red-800 transition-all duration-300 text-center"
+                      onClick={handleLogout}
+                      className="px-4 py-2 sm:px-6 sm:py-3 bg-gradient-to-r from-red-500 to-red-700 text-white font-medium rounded-full hover:from-red-600 hover:to-red-800 transition-all duration-300 text-center text-sm sm:text-base"
                     >
                       Logout
                     </button>
@@ -126,7 +135,7 @@ export default function Navbar() {
                 ) : (
                   <Link
                     href="/auth/login"
-                    className="px-6 py-3 bg-gradient-to-r from-cyan-500 to-blue-500 text-white font-medium rounded-full hover:from-cyan-600 hover:to-blue-600 transition-all duration-300 glow-cyan text-center"
+                    className="px-4 py-2 sm:px-6 sm:py-3 bg-gradient-to-r from-cyan-500 to-blue-500 text-white font-medium rounded-full hover:from-cyan-600 hover:to-blue-600 transition-all duration-300 glow-cyan text-center text-sm sm:text-base"
                     onClick={() => setIsMenuOpen(false)}
                   >
                     Get Started

@@ -43,7 +43,7 @@
 
 /* Scrollbar styling */
 ::-webkit-scrollbar {
-  width: 8px;
+  width: 6px;
 }
 
 ::-webkit-scrollbar-track {
@@ -59,21 +59,9 @@
 }
 
 /* Responsive adjustments */
-@media (max-width: 1024px) {
-  .container {
-    max-width: 100%;
-    padding-left: 2rem;
-    padding-right: 2rem;
-  }
-  
-  /* Adjust AI panel for tablets */
-  .ai-panel {
-    width: 320px;
-  }
-}
-
 @media (max-width: 768px) {
   .container {
+    max-width: 100%;
     padding-left: 1rem;
     padding-right: 1rem;
   }
@@ -84,15 +72,15 @@
   }
   
   .hero-text {
-    margin-bottom: 2rem;
+    margin-bottom: 1.5rem;
   }
   
   .chat-preview-container {
-    padding: 1rem;
+    padding: 0.75rem;
   }
   
   .message-bubble {
-    max-width: 80%;
+    max-width: 85%;
   }
   
   /* Hide AI panel on mobile by default */
@@ -102,7 +90,7 @@
     top: 0;
     height: 100%;
     width: 100%;
-    max-width: 320px;
+    max-width: 300px;
     z-index: 50;
     transform: translateX(100%);
     transition: transform 0.3s ease;
@@ -145,35 +133,47 @@
 
 @media (max-width: 640px) {
   .hero-title {
-    font-size: 2.5rem;
+    font-size: 2rem;
   }
   
   .hero-subtitle {
-    font-size: 1.25rem;
+    font-size: 1rem;
   }
   
   .cta-button {
     width: 100%;
     margin-bottom: 1rem;
+    padding: 0.75rem;
   }
   
   .feature-card {
-    padding: 1.5rem;
+    padding: 1rem;
   }
   
   /* Further adjust AI panel for small screens */
   .ai-panel {
-    max-width: 280px;
+    max-width: 260px;
+  }
+  
+  /* Adjust message bubbles for small screens */
+  .message-bubble {
+    max-width: 80%;
+    padding: 0.75rem;
+  }
+  
+  /* Adjust header elements for small screens */
+  .chat-header h2 {
+    font-size: 1.25rem;
   }
 }
 
 @media (max-width: 480px) {
   .hero-title {
-    font-size: 2rem;
+    font-size: 1.75rem;
   }
   
   .navbar-logo-text {
-    font-size: 1.5rem;
+    font-size: 1.25rem;
   }
   
   .chat-header {
@@ -181,20 +181,57 @@
   }
   
   .message-bubble {
-    max-width: 70%;
-    padding: 0.75rem;
+    max-width: 75%;
+    padding: 0.5rem;
   }
   
   /* Hide session ID on very small screens */
   .session-id {
-    display: none;
+    font-size: 0.75rem;
+  }
+  
+  /* Adjust room list items for small screens */
+  .room-item {
+    padding: 0.5rem;
+  }
+}
+
+/* Medium screen adjustments */
+@media (min-width: 768px) and (max-width: 1024px) {
+  .container {
+    max-width: 100%;
+    padding-left: 1.5rem;
+    padding-right: 1.5rem;
+  }
+  
+  .hero-title {
+    font-size: 3rem;
+  }
+  
+  .hero-subtitle {
+    font-size: 1.25rem;
+  }
+  
+  .feature-card {
+    padding: 1.5rem;
   }
 }
 
 /* Large screen adjustments */
-@media (min-width: 1440px) {
+@media (min-width: 1024px) {
+  .container {
+    max-width: 100%;
+    padding-left: 2rem;
+    padding-right: 2rem;
+  }
+  
+  /* Adjust AI panel for tablets */
+  .ai-panel {
+    width: 320px;
+  }
+  
   .hero-title {
-    font-size: 4rem;
+    font-size: 3.5rem;
   }
   
   .hero-subtitle {
@@ -206,14 +243,33 @@
   }
 }
 
+/* Extra large screen adjustments */
+@media (min-width: 1280px) {
+  .hero-title {
+    font-size: 4rem;
+  }
+  
+  .hero-subtitle {
+    font-size: 1.75rem;
+  }
+  
+  .feature-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
 /* Ultra-wide screen adjustments */
-@media (min-width: 1920px) {
+@media (min-width: 1536px) {
   .hero-content {
     max-width: 1600px;
   }
   
   .feature-grid {
     grid-template-columns: repeat(4, 1fr);
+  }
+  
+  .hero-title {
+    font-size: 4.5rem;
   }
 }
 
@@ -374,4 +430,35 @@
 
 .scale-100 {
   transform: scale(1);
+}
+
+/* Ensure full width for all screens */
+.w-full {
+  width: 100%;
+}
+
+.max-w-full {
+  max-width: 100%;
+}
+
+/* Responsive height utilities */
+.h-screen {
+  height: 100vh;
+}
+
+.min-h-screen {
+  min-height: 100vh;
+}
+
+/* Overflow handling */
+.overflow-hidden {
+  overflow: hidden;
+}
+
+.overflow-x-hidden {
+  overflow-x: hidden;
+}
+
+.overflow-y-auto {
+  overflow-y: auto;
 }
