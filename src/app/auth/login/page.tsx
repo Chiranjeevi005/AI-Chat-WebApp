@@ -13,7 +13,7 @@ export default function LoginPage() {
   const [authMethod, setAuthMethod] = useState<'email' | 'oauth'>('email');
   const router = useRouter();
   const searchParamsRef = useRef<URLSearchParams | null>(null);
-  const { signInWithPassword, signInWithOAuth, isAuthenticated, resetError } = useAuthContext();
+  const { signInWithPassword, signInWithOAuth, isAuthenticated, user, resetError } = useAuthContext();
 
   // Initialize searchParamsRef after component mounts
   useEffect(() => {
@@ -36,11 +36,16 @@ export default function LoginPage() {
 
   // Check if user is already authenticated and redirect
   useEffect(() => {
-    if (isAuthenticated) {
+    if (isAuthenticated && user) {
       const redirect = searchParamsRef.current?.get('redirect');
-      router.push(redirect || '/chat-session');
+      // Special handling for admin user - check the authenticated user's email
+      if (user.email === 'chiranjeevi8050@gmail.com') {
+        router.push(redirect || '/admin');
+      } else {
+        router.push(redirect || '/chat-session');
+      }
     }
-  }, [isAuthenticated, router]);
+  }, [isAuthenticated, user, router]);
 
   // Validate email format
   const isValidEmail = (email: string) => {
@@ -82,7 +87,7 @@ export default function LoginPage() {
 
     try {
       await signInWithPassword(email, password);
-      // The redirect will be handled by the auth hook
+      // The redirect will be handled by the auth hook and the useEffect above
     } catch (err: unknown) {
       console.error('Login error:', err);
       // Provide more user-friendly error messages

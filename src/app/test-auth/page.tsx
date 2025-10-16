@@ -8,7 +8,7 @@ export default function TestAuthPage() {
   const { user, session, loading, error, signInWithPassword, signOut } = useAuthContext();
   const router = useRouter();
   const [email, setEmail] = useState('test@example.com');
-  const [password, setPassword] = useState('password123');
+  const [password, setPassword] = useState('Password123');
   const [signInError, setSignInError] = useState<string | null>(null);
 
   useEffect(() => {
@@ -109,7 +109,7 @@ export default function TestAuthPage() {
         <div className="mt-6 text-center text-sm text-gray-400">
           <p>Test Credentials:</p>
           <p>Email: test@example.com</p>
-          <p>Password: password123</p>
+          <p>Password: Password123</p>
         </div>
       </div>
     </div>

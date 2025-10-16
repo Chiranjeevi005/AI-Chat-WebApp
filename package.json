@@ -12,6 +12,7 @@
     "seed": "node scripts/seed-rooms.js",
     "update-schema": "node update-database-schema.js",
     "create-missing-tables": "node scripts/create-missing-tables.js",
+    "setup-admin": "node scripts/create-admin-user.js",
     "test": "vitest"
   },
   "dependencies": {

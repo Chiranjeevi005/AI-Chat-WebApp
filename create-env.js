@@ -1,9 +1,0 @@
-const fs = require('fs');
-
-const envContent = `NEXT_PUBLIC_SUPABASE_URL=https://iyqtfhvuuesdzpsbnxad.supabase.co
-NEXT_PUBLIC_SUPABASE_ANON_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Iml5cXRmaHZ1dWVzZHpwc2JueGFkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjAzOTU5MzksImV4cCI6MjA3NTk3MTkzOX0.sxQNeWpjaVIbRHA16zaskb7bl7MnnuN6XZXs9MkzkJY
-SUPABASE_SERVICE_ROLE_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Iml5cXRmaHZ1dWVzZHpwc2JueGFkIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc2MDM5NTkzOSwiZXhwIjoyMDc1OTcxOTM5fQ.r1wNapfGljWL38vdogmsl4ogstFsSKG0JVJllFbdD2M
-`;
-
-fs.writeFileSync('.env.local', envContent);
-console.log('.env.local file created successfully');

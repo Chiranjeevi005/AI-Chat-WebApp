@@ -57,6 +57,27 @@ For detailed information about the authentication system, see:
 - [Authentication System Documentation](AUTH_SYSTEM_DOCUMENTATION.md)
 - [End-to-End Auth System](END_TO_END_AUTH_SYSTEM.md)
 
+## Admin User Setup
+
+This application has a designated admin user with special privileges:
+
+- **Email**: chiranjeevi8050@gmail.com
+- **Password**: Password123
+
+Only this user can access the admin panel at `/admin`. All other users will be redirected to the regular chat interface.
+
+To set up the admin user:
+
+1. Run the admin user creation script:
+```bash
+node scripts/create-admin-user.js
+```
+
+2. Or manually create the user through the signup form, then run:
+```bash
+node scripts/setup-admin-user.js
+```
+
 ## Setup Instructions
 
 ### 1. Install dependencies:
@@ -79,12 +100,17 @@ SUPABASE_SERVICE_ROLE_KEY=your_supabase_service_role_key
 NEXT_PUBLIC_APP_URL=http://localhost:3003
 ```
 
-### 4. Run the development server:
+### 4. Set up the admin user:
+```bash
+node scripts/create-admin-user.js
+```
+
+### 5. Run the development server:
 ```bash
 npm run dev
 ```
 
-### 5. Visit `http://localhost:3003` to view the application
+### 6. Visit `http://localhost:3003` to view the application
 
 ## Available Scripts
 

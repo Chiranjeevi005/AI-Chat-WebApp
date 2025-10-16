@@ -74,17 +74,35 @@ export async function authMiddleware(request: NextRequest) {
   // Protected routes that require authentication
   const protectedPaths = ['/profile', '/settings', '/dashboard'];
   
+  // Admin-only paths
+  const adminPaths = ['/admin'];
+  
   // Check if the current path is protected
   const isProtectedPath = protectedPaths.some(path => 
     request.nextUrl.pathname.startsWith(path)
   );
+  
+  // Check if the current path is admin-only
+  const isAdminPath = adminPaths.some(path => 
+    request.nextUrl.pathname.startsWith(path)
+  );
 
   // If the user is not logged in and trying to access a protected route, redirect to login
-  if (!session && isProtectedPath) {
+  if (!session && (isProtectedPath || isAdminPath)) {
     const url = request.nextUrl.clone();
     url.pathname = '/auth/login';
     url.searchParams.set('redirect', request.nextUrl.pathname);
     return NextResponse.redirect(url);
+  }
+
+  // If accessing admin paths, check if user is the designated admin
+  if (session && isAdminPath) {
+    // Only allow chiranjeevi8050@gmail.com as admin
+    if (session.user.email !== 'chiranjeevi8050@gmail.com') {
+      const url = request.nextUrl.clone();
+      url.pathname = '/chat-session';
+      return NextResponse.redirect(url);
+    }
   }
 
   // Auth pages that should not be accessible to logged-in users
@@ -93,13 +111,27 @@ export async function authMiddleware(request: NextRequest) {
     request.nextUrl.pathname.startsWith(path)
   );
 
-  // If the user is logged in and trying to access auth pages, redirect to chat
+  // If the user is logged in and trying to access auth pages, redirect appropriately
   if (session && isAuthPath) {
     const url = request.nextUrl.clone();
-    // Check for redirect parameter
+    // Check for redirect parameter first
     const redirect = request.nextUrl.searchParams.get('redirect');
-    url.pathname = redirect || '/chat-session';
-    return NextResponse.redirect(url);
+    
+    if (redirect) {
+      // If there's a redirect parameter, use it
+      url.pathname = redirect;
+      return NextResponse.redirect(url);
+    } else {
+      // No redirect parameter, check if user is admin
+      if (session.user.email === 'chiranjeevi8050@gmail.com') {
+        // Admin user goes to admin panel
+        url.pathname = '/admin';
+      } else {
+        // Regular user goes to chat session
+        url.pathname = '/chat-session';
+      }
+      return NextResponse.redirect(url);
+    }
   }
 
   return response;
@@ -176,6 +208,22 @@ export async function checkPermission(request: NextRequest, requiredPermission: 
         success: false,
         error: 'Unauthorized: No valid session found',
         status: 401
+      };
+    }
+
+    // Special check for admin access - only chiranjeevi8050@gmail.com can be admin
+    if (requiredPermission === 'admin') {
+      if (session.user.email !== 'chiranjeevi8050@gmail.com') {
+        return {
+          success: false,
+          error: 'Forbidden: Insufficient permissions',
+          status: 403
+        };
+      }
+      return {
+        success: true,
+        user: session.user,
+        session: session
       };
     }
 

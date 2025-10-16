@@ -3,6 +3,7 @@
 -- Create profiles table (extends Supabase auth.users)
 create table if not exists profiles (
   id uuid references auth.users on delete cascade not null,
+  email text unique,
   username text unique,
   display_name text,
   avatar_url text,
@@ -211,3 +212,5 @@ create index if not exists idx_messages_user_id on messages(user_id);
 create index if not exists idx_rooms_created_by on rooms(created_by);
 create index if not exists idx_room_members_room_id on room_members(room_id);
 create index if not exists idx_room_members_user_id on room_members(user_id);
+create index if not exists idx_profiles_email on profiles(email);
+create index if not exists idx_profiles_role on profiles(role);

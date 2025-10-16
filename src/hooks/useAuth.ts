@@ -74,7 +74,7 @@ export function useAuth(): AuthHook {
           .insert([{
             id: user.id,
             username: user.user_metadata?.username || user.email?.split('@')[0] || `user_${user.id.substring(0, 8)}`,
-            role: 'user' // Ensure the role field is included
+            role: user.email === 'chiranjeevi8050@gmail.com' ? 'admin' : 'user' // Set admin role for designated user
           }]);
 
         if (insertProfileError) {
@@ -85,6 +85,19 @@ export function useAuth(): AuthHook {
             hint: insertProfileError.hint,
             message: insertProfileError.message
           });
+        }
+      } else {
+        // If profile exists, check if it should be admin
+        if (user.email === 'chiranjeevi8050@gmail.com') {
+          // Update role to admin if needed
+          const { error: updateProfileError } = await supabase
+            .from('profiles')
+            .update({ role: 'admin' })
+            .eq('id', user.id);
+            
+          if (updateProfileError) {
+            console.error('Error updating user profile to admin:', updateProfileError);
+          }
         }
       }
     } catch (error) {
@@ -137,28 +150,19 @@ export function useAuth(): AuthHook {
           error: null
         });
         
-        // Handle redirects based on auth state
-        if (session) {
-          // User logged in
-          if (typeof window !== 'undefined' && routerRef.current) {
-            const currentPath = window.location.pathname;
-            const urlParams = new URLSearchParams(window.location.search);
-            const redirect = urlParams.get('redirect');
-            
-            // Always check for redirect parameter after login, regardless of current path
-            if (redirect && currentPath.startsWith('/auth')) {
-              // Redirect to the specified page
-              routerRef.current.push(redirect);
-            } else if (currentPath.startsWith('/auth') && !currentPath.startsWith('/auth/callback')) {
-              // If on auth pages but no redirect parameter, go to chat-session
-              routerRef.current.push('/chat-session');
-            }
-          }
-        } else {
+        // Handle redirects based on auth state - but only for sign in events
+        if (_event === 'SIGNED_IN' && session) {
+          // User logged in - let the login page handle the redirect
+          // The login page has more context about the user's intent
+          return;
+        }
+        
+        // Handle logout events
+        if (_event === 'SIGNED_OUT') {
           // User logged out
           if (typeof window !== 'undefined' && routerRef.current) {
             const currentPath = window.location.pathname;
-            if (currentPath.startsWith('/chat-session') || currentPath.startsWith('/profile')) {
+            if (currentPath.startsWith('/chat-session') || currentPath.startsWith('/profile') || currentPath.startsWith('/admin')) {
               routerRef.current.push('/auth/login');
             }
           }
@@ -196,7 +200,7 @@ export function useAuth(): AuthHook {
           .insert([{
             id: data.user.id,
             username: options?.username || email.split('@')[0],
-            role: 'user' // Ensure the role field is included
+            role: email === 'chiranjeevi8050@gmail.com' ? 'admin' : 'user' // Set admin role for designated user
           }])
           .select()
           .single();
