@@ -1,7 +1,7 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-import { useRouter, useSearchParams } from 'next/navigation';
+import { useState, useEffect, useRef } from 'react';
+import { useRouter } from 'next/navigation';
 import { useAuthContext } from '@/contexts/AuthContext';
 
 export default function VerifyEmailPage() {
@@ -9,8 +9,17 @@ export default function VerifyEmailPage() {
   const [isVerifying, setIsVerifying] = useState(false);
   const [verificationStatus, setVerificationStatus] = useState<'pending' | 'success' | 'error'>('pending');
   const router = useRouter();
-  const searchParams = useSearchParams();
+  const searchParamsRef = useRef<URLSearchParams | null>(null);
+  const userRef = useRef<any>(null);
   const { user, verifyEmail } = useAuthContext();
+
+  // Initialize searchParamsRef after component mounts
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      searchParamsRef.current = new URLSearchParams(window.location.search);
+      userRef.current = user;
+    }
+  }, [user]);
 
   useEffect(() => {
     // If user is already verified, redirect to chat
@@ -19,9 +28,9 @@ export default function VerifyEmailPage() {
     }
 
     // Check if we have token and email in URL parameters
-    const token = searchParams.get('token');
-    const email = searchParams.get('email');
-    const type = searchParams.get('type');
+    const token = searchParamsRef.current?.get('token');
+    const email = searchParamsRef.current?.get('email');
+    const type = searchParamsRef.current?.get('type');
 
     if (token && email) {
       handleEmailVerification(email, token, type || 'signup');
@@ -34,7 +43,7 @@ export default function VerifyEmailPage() {
       }, 1000);
       return () => clearTimeout(timer);
     }
-  }, [timeLeft, user, router, searchParams]);
+  }, [timeLeft, user, router]);
 
   const handleEmailVerification = async (email: string, token: string, type: string) => {
     setIsVerifying(true);

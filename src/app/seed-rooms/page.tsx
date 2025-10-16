@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import Link from 'next/link';
 
 export default function SeedRoomsPage() {
   const [seeding, setSeeding] = useState(false);
@@ -78,12 +79,12 @@ export default function SeedRoomsPage() {
               )}
             </button>
             
-            <a 
+            <Link 
               href="/"
               className="flex-1 py-3 px-4 bg-gray-600 hover:bg-gray-700 text-white rounded-lg font-medium text-center transition-colors"
             >
               Back to Chat
-            </a>
+            </Link>
           </div>
           
           {error && (

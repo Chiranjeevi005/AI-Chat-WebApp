@@ -28,7 +28,7 @@ export interface Room {
 export interface Message {
   id: number;
   room_id: string;
-  sender_id: string;
+  user_id: string; // Changed from sender_id to user_id to match actual database schema
   content: string;
   created_at: string;
   profiles?: {

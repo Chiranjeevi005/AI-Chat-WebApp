@@ -2,13 +2,22 @@
 
 import { useEffect, useState } from 'react';
 import { supabase } from '@/lib/supabaseClient';
+import Link from 'next/link';
 
 export default function TestSupabaseConnection() {
   const [connectionStatus, setConnectionStatus] = useState<string>('Checking...');
   const [error, setError] = useState<string | null>(null);
   const [testResults, setTestResults] = useState<any>(null);
+  const [isClient, setIsClient] = useState(false);
 
   useEffect(() => {
+    // Ensure this only runs on the client side
+    setIsClient(true);
+  }, []);
+
+  useEffect(() => {
+    if (!isClient) return;
+
     const testConnection = async () => {
       try {
         // Test basic Supabase connection by trying to access rooms table
@@ -37,7 +46,21 @@ export default function TestSupabaseConnection() {
     };
 
     testConnection();
-  }, []);
+  }, [isClient]);
+
+  if (!isClient) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-900 p-4">
+        <div className="bg-gray-800 rounded-xl p-8 max-w-md w-full border border-gray-700">
+          <h1 className="text-2xl font-bold text-white mb-6 text-center">Supabase Connection Test</h1>
+          <div className="text-center py-8">
+            <div className="inline-block animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-cyan-500 mb-4"></div>
+            <p className="text-gray-300">Initializing...</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-900 p-4">
@@ -70,7 +93,7 @@ export default function TestSupabaseConnection() {
           <div className="p-4 bg-gray-700/50 rounded-lg">
             <h2 className="text-gray-300 font-medium mb-2">Next Steps:</h2>
             <ul className="text-gray-400 text-sm space-y-1">
-              <li>1. Visit <a href="/" className="text-cyan-400 hover:text-cyan-300">Home Page</a> to start using the chat</li>
+              <li>1. Visit <Link href="/" className="text-cyan-400 hover:text-cyan-300">Home Page</Link> to start using the chat</li>
               <li>2. Sign up for a new account or log in with existing credentials</li>
               <li>3. Start chatting in real-time with AI assistance</li>
             </ul>
@@ -83,12 +106,12 @@ export default function TestSupabaseConnection() {
             >
               Retry Connection
             </button>
-            <a 
+            <Link 
               href="/"
               className="flex-1 py-3 bg-gray-600 hover:bg-gray-700 text-white font-medium rounded-lg transition-colors text-center"
             >
               Go to Chat
-            </a>
+            </Link>
           </div>
         </div>
       </div>

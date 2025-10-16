@@ -1,7 +1,7 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-import { useRouter, useSearchParams } from 'next/navigation';
+import { useState, useEffect, useRef } from 'react';
+import { useRouter } from 'next/navigation';
 import { useAuthContext } from '@/contexts/AuthContext';
 import Link from 'next/link';
 
@@ -12,28 +12,35 @@ export default function LoginPage() {
   const [error, setError] = useState('');
   const [authMethod, setAuthMethod] = useState<'email' | 'oauth'>('email');
   const router = useRouter();
-  const searchParams = useSearchParams();
+  const searchParamsRef = useRef<URLSearchParams | null>(null);
   const { signInWithPassword, signInWithOAuth, isAuthenticated, resetError } = useAuthContext();
+
+  // Initialize searchParamsRef after component mounts
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      searchParamsRef.current = new URLSearchParams(window.location.search);
+    }
+  }, []);
 
   // Get error from URL parameters
   useEffect(() => {
-    const errorParam = searchParams.get('error');
-    const messageParam = searchParams.get('message');
+    const errorParam = searchParamsRef.current?.get('error');
+    const messageParam = searchParamsRef.current?.get('message');
     
     if (errorParam) {
       setError(decodeURIComponent(errorParam));
     } else if (messageParam) {
       setError(decodeURIComponent(messageParam));
     }
-  }, [searchParams]);
+  }, []);
 
   // Check if user is already authenticated and redirect
   useEffect(() => {
     if (isAuthenticated) {
-      const redirect = searchParams.get('redirect');
+      const redirect = searchParamsRef.current?.get('redirect');
       router.push(redirect || '/chat-session');
     }
-  }, [isAuthenticated, router, searchParams]);
+  }, [isAuthenticated, router]);
 
   // Validate email format
   const isValidEmail = (email: string) => {

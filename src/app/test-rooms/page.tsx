@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { supabase } from '@/lib/supabaseClient';
+import Link from 'next/link';
 
 export default function TestRooms() {
   const [rooms, setRooms] = useState<any[]>([]);
@@ -49,12 +50,12 @@ export default function TestRooms() {
           <div className="space-y-4">
             <div className="flex justify-between items-center">
               <h2 className="text-lg font-medium text-gray-300">Rooms ({rooms.length})</h2>
-              <a 
+              <Link 
                 href="/"
                 className="px-4 py-2 bg-cyan-600 hover:bg-cyan-700 text-white font-medium rounded-lg transition-colors text-sm"
               >
                 Back to Chat
-              </a>
+              </Link>
             </div>
             
             {rooms.length === 0 ? (
