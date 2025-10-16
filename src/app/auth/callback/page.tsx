@@ -50,11 +50,9 @@ export default function OAuthCallbackPage() {
         if (data.session) {
           // Successfully authenticated, check for redirect parameter
           const redirect = searchParamsRef.current?.get('redirect');
-          console.log('OAuth successful, redirecting to:', redirect || '/chat-session');
           router.push(redirect || '/chat-session');
         } else {
           // No session, redirect to login
-          console.log('No session found after OAuth');
           router.push('/auth/login?error=authentication_failed');
         }
       } catch (err) {

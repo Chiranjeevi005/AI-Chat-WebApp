@@ -123,7 +123,7 @@ To add initial rooms to your database, you can use the seeding script:
    npm run seed
    ```
 
-2. Or visit the seeding page at `/seed-rooms` in your browser
+2. Or visit the room initialization page at `/seed-rooms` in your browser
 
 This will create 5 initial rooms:
 - Welcome Lounge

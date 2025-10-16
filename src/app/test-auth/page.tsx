@@ -24,8 +24,7 @@ export default function TestAuthPage() {
     
     try {
       const result = await signInWithPassword(email, password);
-      console.log('Sign in result:', result);
-      
+
       if (result?.error) {
         setSignInError(result.error.message);
       } else {
@@ -51,8 +50,8 @@ export default function TestAuthPage() {
     <div className="min-h-screen flex items-center justify-center bg-gray-900 p-4">
       <div className="bg-gray-800 rounded-xl p-8 max-w-md w-full shadow-2xl border border-gray-700">
         <div className="text-center mb-8">
-          <h1 className="text-3xl font-bold text-white mb-2">Test Authentication</h1>
-          <p className="text-gray-400">Sign in to test the chat application</p>
+          <h1 className="text-3xl font-bold text-white mb-2">Authentication</h1>
+          <p className="text-gray-400">Sign in to access the chat application</p>
         </div>
 
         {error && (
@@ -107,7 +106,7 @@ export default function TestAuthPage() {
         </form>
 
         <div className="mt-6 text-center text-sm text-gray-400">
-          <p>Test Credentials:</p>
+          <p>Demo Credentials:</p>
           <p>Email: test@example.com</p>
           <p>Password: Password123</p>
         </div>

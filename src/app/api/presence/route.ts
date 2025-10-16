@@ -33,7 +33,6 @@ export async function POST(request: Request) {
 
     // Silently ignore presence updates to prevent errors
     // In a production environment, you would implement proper presence tracking
-    console.log(`Presence update (ignored): ${userId} is ${status} in room ${roomId}`);
 
     // Return success
     return NextResponse.json({ success: true });

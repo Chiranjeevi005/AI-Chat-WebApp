@@ -16,8 +16,7 @@ export default function Home() {
   const logoRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    // Debugging: Log user authentication state changes
-    console.log('Home page - User authentication state changed:', { user, loading, isAuthenticated });
+    // Removed verbose logging for security
   }, [user, loading, isAuthenticated]);
 
   const particlePositions = [
@@ -164,7 +163,7 @@ export default function Home() {
   }, []);
 
   const handleStartChatting = () => {
-    console.log('Start Chatting clicked - Starting direct transition');
+    // Removed verbose logging for security
     
     // Start the direct transition animation
     startDirectTransition();

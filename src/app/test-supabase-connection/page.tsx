@@ -36,7 +36,6 @@ export default function TestSupabaseConnection() {
             count: count,
             data: data
           });
-          console.log('Supabase connection successful:', { data, count });
         }
       } catch (err) {
         console.error('Connection test error:', err);
@@ -65,7 +64,7 @@ export default function TestSupabaseConnection() {
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-900 p-4">
       <div className="bg-gray-800 rounded-xl p-8 max-w-md w-full border border-gray-700">
-        <h1 className="text-2xl font-bold text-white mb-6 text-center">Supabase Connection Test</h1>
+        <h1 className="text-2xl font-bold text-white mb-6 text-center">Supabase Connection</h1>
         
         <div className="space-y-4">
           <div className="flex items-center justify-between p-4 bg-gray-700 rounded-lg">

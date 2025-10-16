@@ -114,7 +114,6 @@ export async function POST(request: Request) {
     }
 
     // Log the room creation
-    console.log(`Room created: ${roomData.id} - ${roomData.name} by user ${user.id}`);
 
     // Return the created room
     return NextResponse.json({ success: true, room: roomData });

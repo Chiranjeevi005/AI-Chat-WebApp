@@ -79,12 +79,6 @@ export function useAuth(): AuthHook {
 
         if (insertProfileError) {
           console.error('Error creating user profile:', insertProfileError);
-          console.error('Profile error details:', {
-            code: insertProfileError.code,
-            details: insertProfileError.details,
-            hint: insertProfileError.hint,
-            message: insertProfileError.message
-          });
         }
       } else {
         // If profile exists, check if it should be admin
@@ -102,9 +96,6 @@ export function useAuth(): AuthHook {
       }
     } catch (error) {
       console.error('Error ensuring user profile:', error);
-      if (error && typeof error === 'object' && (error as any).message) {
-        console.error('Profile error message:', (error as any).message);
-      }
     }
   }, []);
 

@@ -35,7 +35,7 @@ export default function TestRooms() {
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-900 p-4">
       <div className="bg-gray-800 rounded-xl p-8 max-w-2xl w-full border border-gray-700">
-        <h1 className="text-2xl font-bold text-white mb-6 text-center">Rooms Test</h1>
+        <h1 className="text-2xl font-bold text-white mb-6 text-center">Rooms</h1>
         
         {loading ? (
           <div className="text-center py-8">
@@ -49,7 +49,7 @@ export default function TestRooms() {
         ) : (
           <div className="space-y-4">
             <div className="flex justify-between items-center">
-              <h2 className="text-lg font-medium text-gray-300">Rooms ({rooms.length})</h2>
+              <h2 className="text-lg font-medium text-gray-300">Available Rooms ({rooms.length})</h2>
               <Link 
                 href="/"
                 className="px-4 py-2 bg-cyan-600 hover:bg-cyan-700 text-white font-medium rounded-lg transition-colors text-sm"

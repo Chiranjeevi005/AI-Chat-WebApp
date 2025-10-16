@@ -1,20 +1,16 @@
 import { createClient } from '@supabase/supabase-js';
 
-console.log('Initializing Supabase client...');
-console.log('NEXT_PUBLIC_SUPABASE_URL:', process.env.NEXT_PUBLIC_SUPABASE_URL);
-console.log('NEXT_PUBLIC_SUPABASE_ANON_KEY:', process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ? 'SET' : 'NOT SET');
-
+// Removed sensitive logging for security
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 
 if (!supabaseUrl || !supabaseAnonKey) {
   console.error('❌ Missing Supabase environment variables');
-  console.error('NEXT_PUBLIC_SUPABASE_URL:', supabaseUrl);
-  console.error('NEXT_PUBLIC_SUPABASE_ANON_KEY:', supabaseAnonKey);
+  // Removed logging of actual values for security
   throw new Error('Missing Supabase environment variables');
 }
 
-console.log('✅ Creating Supabase client with URL:', supabaseUrl);
+// Removed logging of URL for security
 
 export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
   auth: {
@@ -30,7 +26,7 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
   },
 });
 
-console.log('✅ Supabase client created successfully');
+// Removed success logging for security
 
 // Export types for better TypeScript support
 export type { Session, User } from '@supabase/supabase-js';

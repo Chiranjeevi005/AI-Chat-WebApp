@@ -16,7 +16,7 @@ export default function EnvTest() {
 
   return (
     <div className="min-h-screen bg-gray-900 text-white p-8">
-      <h1 className="text-3xl font-bold mb-6">Environment Variables Test</h1>
+      <h1 className="text-3xl font-bold mb-6">Environment Variables</h1>
       
       <div className="bg-gray-800 rounded-lg p-6 max-w-2xl">
         <h2 className="text-xl font-semibold mb-4">Client-side Environment Variables</h2>
@@ -48,7 +48,7 @@ export default function EnvTest() {
       <div className="mt-8 bg-gray-800 rounded-lg p-6 max-w-2xl">
         <h2 className="text-xl font-semibold mb-4">Next Steps</h2>
         <ul className="list-disc pl-5 space-y-2 text-gray-300">
-          <li>Check that the values above are correctly set</li>
+          <li>Verify that the values above are correctly set</li>
           <li>If they appear correct, try restarting the development server</li>
           <li>If issues persist, verify the Supabase project settings</li>
         </ul>

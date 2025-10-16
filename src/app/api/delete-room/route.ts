@@ -106,7 +106,6 @@ export async function DELETE(request: Request) {
     }
 
     // Log the room deletion
-    console.log(`Room deleted: ${roomId} by user ${user.id}`);
 
     // Return success
     return NextResponse.json({ success: true });

@@ -108,7 +108,6 @@ export default function RoomSidebar({
         }
       } catch (err) {
         // If room_members table doesn't exist, gracefully handle
-        console.log('Using partial schema for online users');
         setSchemaStatus('partial');
         setOnlineUsers({});
       }

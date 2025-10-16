@@ -71,31 +71,24 @@ export default function ChatSessionPage() {
 
   // Authentication check
   useEffect(() => {
-    console.log('Auth effect triggered:', { authLoading, user, session });
     if (!authLoading && !session) {
-      console.log('No session, redirecting to login');
       router.push('/auth/login');
     } else if (session && user) {
-      console.log('Session and user available, initializing user');
       initializeUser();
     }
   }, [authLoading, session, user, router]);
 
   // Initialize user data
   const initializeUser = useCallback(async () => {
-    console.log('initializeUser called');
     if (!session) return;
     
     try {
       // Fetch user role
-      console.log('Fetching user role');
       const { data: profileData, error: profileError } = await supabase
         .from('profiles')
         .select('role')
         .eq('id', session.user.id)
         .single();
-
-      console.log('Profile data result:', { profileData, profileError });
 
       if (!profileError && profileData?.role) {
         setUserRole(profileData.role);
@@ -104,7 +97,6 @@ export default function ChatSessionPage() {
       }
 
       // Fetch rooms
-      console.log('Fetching rooms');
       await fetchRooms();
     } catch (err) {
       console.error('Error initializing user:', err);
@@ -115,9 +107,7 @@ export default function ChatSessionPage() {
 
   // Fetch rooms with optimized approach
   const fetchRooms = useCallback(async () => {
-    console.log('fetchRooms called');
     if (!session) {
-      console.log('No session, skipping room fetch');
       setLoading(false);
       return;
     }
@@ -132,7 +122,6 @@ export default function ChatSessionPage() {
       }
       
       loadingTimeoutRef.current = setTimeout(() => {
-        console.log('Loading timeout reached, setting loading to false');
         setLoading(false);
       }, 10000); // 10 second timeout
       
@@ -140,13 +129,10 @@ export default function ChatSessionPage() {
       let userRooms = [];
       
       // First try the user_rooms table (new schema)
-      console.log('Trying user_rooms table');
       const { data: userRoomsData, error: userRoomsError } = await supabase
         .from('user_rooms')
         .select('room_id')
         .eq('user_id', session.user.id);
-
-      console.log('user_rooms result:', { userRoomsData, userRoomsError });
 
       if (!userRoomsError && userRoomsData && userRoomsData.length > 0) {
         const roomIds = userRoomsData.map(ur => ur.room_id);
@@ -157,20 +143,15 @@ export default function ChatSessionPage() {
           .in('id', roomIds)
           .order('created_at', { ascending: true });
 
-        console.log('Rooms data result:', { roomsData, roomsError });
-
         if (!roomsError) {
           userRooms = roomsData || [];
         }
       } else {
         // Fallback to room_members table (older schema)
-        console.log('Trying room_members table');
         const { data: roomMembers, error: membersError } = await supabase
           .from('room_members')
           .select('room_id')
           .eq('user_id', session.user.id);
-
-        console.log('room_members result:', { roomMembers, membersError });
 
         if (!membersError && roomMembers && roomMembers.length > 0) {
           const roomIds = roomMembers.map(rm => rm.room_id);
@@ -181,20 +162,15 @@ export default function ChatSessionPage() {
             .in('id', roomIds)
             .order('created_at', { ascending: true });
 
-          console.log('Rooms data result (fallback):', { roomsData, roomsError });
-
           if (!roomsError) {
             userRooms = roomsData || [];
           }
         } else {
           // Final fallback: get all rooms (public mode)
-          console.log('Getting all rooms (public mode)');
           const { data: roomsData, error: roomsError } = await supabase
             .from('rooms')
             .select('*')
             .order('created_at', { ascending: true });
-
-          console.log('All rooms result:', { roomsData, roomsError });
 
           if (!roomsError) {
             userRooms = roomsData || [];
@@ -202,7 +178,6 @@ export default function ChatSessionPage() {
         }
       }
       
-      console.log('Setting rooms:', userRooms);
       setRooms(userRooms);
       if (userRooms.length > 0 && !selectedRoomId) {
         setSelectedRoomId(userRooms[0].id);
@@ -210,7 +185,6 @@ export default function ChatSessionPage() {
     } catch (err) {
       console.error('Error fetching rooms:', err);
     } finally {
-      console.log('Setting loading to false');
       setLoading(false);
       if (loadingTimeoutRef.current) {
         clearTimeout(loadingTimeoutRef.current);
@@ -639,7 +613,6 @@ export default function ChatSessionPage() {
       });
     } catch (err) {
       // Silently ignore presence errors to prevent UI disruption
-      console.debug('Presence update failed (non-critical):', err);
     }
   }, [session]);
 
@@ -701,7 +674,6 @@ export default function ChatSessionPage() {
 
   // Loading state - with timeout to prevent infinite loading
   if (authLoading || loading) {
-    console.log('Showing loading state:', { authLoading, loading });
     return (
       <div 
         ref={pageRef}
@@ -710,21 +682,7 @@ export default function ChatSessionPage() {
         <div className="text-center">
           <div className="w-16 h-16 border-4 border-cyan-500 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
           <p className="text-gray-300">Loading chat session...</p>
-          <p className="text-gray-500 text-sm mt-2">Auth Loading: {authLoading ? 'true' : 'false'}, App Loading: {loading ? 'true' : 'false'}</p>
-          {session && <p className="text-gray-500 text-sm">Session: {session.user?.email || 'Available'}</p>}
-          <button 
-            onClick={() => {
-              setLoading(false);
-              // Set some default values for testing
-              setRooms([
-                { id: '1', name: 'General', description: 'General chat room', created_at: new Date().toISOString(), created_by: 'test-user' }
-              ]);
-              setSelectedRoomId('1');
-            }}
-            className="mt-4 px-4 py-2 bg-cyan-600 hover:bg-cyan-700 text-white rounded-lg transition-colors text-sm"
-          >
-            Skip Loading (Test Only)
-          </button>
+          <p className="text-gray-500 text-sm mt-2">Please wait while we connect you to the chat service</p>
         </div>
       </div>
     );

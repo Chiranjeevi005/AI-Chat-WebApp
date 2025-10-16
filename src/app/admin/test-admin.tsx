@@ -1,10 +1,10 @@
-// Test component to verify admin functionality
+// Component to verify admin functionality
 'use client';
 
 import { useEffect, useState } from 'react';
 import { supabase } from '@/lib/supabaseClient';
 
-export default function TestAdmin() {
+export default function AdminVerification() {
   const [user, setUser] = useState<any>(null);
   const [profile, setProfile] = useState<any>(null);
   const [loading, setLoading] = useState(true);
@@ -46,7 +46,7 @@ export default function TestAdmin() {
 
   return (
     <div className="p-4 text-white">
-      <h1 className="text-2xl font-bold mb-4">Admin Test</h1>
+      <h1 className="text-2xl font-bold mb-4">Admin Verification</h1>
       
       {user ? (
         <div>

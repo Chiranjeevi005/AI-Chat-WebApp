@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 
 export async function GET() {
-  console.log('Ping request received');
+  // Removed verbose logging for security
   
   try {
     // Simple ping response without database connection

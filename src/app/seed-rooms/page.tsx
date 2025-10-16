@@ -38,13 +38,13 @@ export default function SeedRoomsPage() {
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-900 p-4">
       <div className="bg-gray-800 rounded-xl p-8 max-w-2xl w-full border border-gray-700">
-        <h1 className="text-2xl font-bold text-white mb-6 text-center">Seed Initial Rooms</h1>
+        <h1 className="text-2xl font-bold text-white mb-6 text-center">Initialize Chat Rooms</h1>
         
         <div className="space-y-6">
           <div className="p-4 bg-gray-700/50 rounded-lg">
-            <h2 className="text-lg font-medium text-gray-300 mb-2">About Room Seeding</h2>
+            <h2 className="text-lg font-medium text-gray-300 mb-2">About Room Initialization</h2>
             <p className="text-gray-400 text-sm">
-              This tool will create 5 initial rooms in your Supabase database for users to see when they first access the application.
+              This tool will create initial rooms in your Supabase database for users to see when they first access the application.
             </p>
             
             <div className="mt-4">
@@ -72,10 +72,10 @@ export default function SeedRoomsPage() {
               {seeding ? (
                 <div className="flex items-center justify-center">
                   <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
-                  Seeding Rooms...
+                  Initializing Rooms...
                 </div>
               ) : (
-                'Seed Initial Rooms'
+                'Initialize Rooms'
               )}
             </button>
             

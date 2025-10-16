@@ -26,7 +26,7 @@ export default function SupabaseTest() {
 
   return (
     <div className="min-h-screen bg-gray-900 text-white p-8">
-      <h1 className="text-3xl font-bold mb-6">Supabase Integration Test</h1>
+      <h1 className="text-3xl font-bold mb-6">Supabase Integration</h1>
       
       {loading && (
         <div className="bg-gray-800 rounded-lg p-6 max-w-2xl">

@@ -43,8 +43,6 @@ const initialRooms = [
 
 export async function seedRooms() {
   try {
-    console.log('Seeding initial rooms...');
-    
     // Check if rooms already exist
     const { data: existingRooms, error: fetchError } = await supabaseAdmin
       .from('rooms')
@@ -56,7 +54,6 @@ export async function seedRooms() {
     
     // If rooms already exist, skip seeding
     if (existingRooms && existingRooms.length > 0) {
-      console.log(`Found ${existingRooms.length} existing rooms. Skipping seeding.`);
       return { success: true, message: 'Rooms already exist, skipping seeding', rooms: existingRooms };
     }
     
@@ -76,7 +73,6 @@ export async function seedRooms() {
       throw new Error(`Error inserting rooms: ${error.message}`);
     }
     
-    console.log('Successfully seeded rooms:', data);
     return { success: true, message: 'Successfully seeded initial rooms', rooms: data };
   } catch (error) {
     console.error('Error seeding rooms:', error);
@@ -87,7 +83,6 @@ export async function seedRooms() {
 // Run the seeding function if this file is executed directly
 if (require.main === module) {
   seedRooms().then(result => {
-    console.log(result);
     process.exit(result.success ? 0 : 1);
   });
 }
