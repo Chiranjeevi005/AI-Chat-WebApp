@@ -72,19 +72,32 @@ export default function ChatSessionPage() {
     const fetchRooms = async () => {
       try {
         setLoading(true);
-        const { data, error } = await supabase
+        console.log('Fetching rooms...');
+        const { data, error, count } = await supabase
           .from('rooms')
-          .select('*')
+          .select('*', { count: 'exact' })
           .order('created_at', { ascending: true });
 
-        if (error) throw error;
+        if (error) {
+          console.error('Supabase error fetching rooms:', error);
+          throw error;
+        }
         
+        console.log('Rooms fetched successfully:', count);
         setRooms(data || []);
         if (data && data.length > 0 && !selectedRoomId) {
           setSelectedRoomId(data[0].id);
         }
       } catch (err) {
         console.error('Error fetching rooms:', err);
+        console.error('Error type:', typeof err);
+        console.error('Error keys:', Object.keys(err || {}));
+        if (err && typeof err === 'object') {
+          console.error('Error message:', (err as Error).message);
+          console.error('Error code:', (err as any).code);
+          console.error('Error details:', (err as any).details);
+          console.error('Error hint:', (err as any).hint);
+        }
         setError('Failed to load rooms. Please try again.');
       } finally {
         setLoading(false);
@@ -136,17 +149,31 @@ export default function ChatSessionPage() {
 
     const fetchMessages = async () => {
       try {
+        console.log('Fetching messages for room:', selectedRoomId);
+        // Simplified query without joining profiles table
         const { data, error } = await supabase
           .from('messages')
-          .select('*, profiles(username, display_name)')
+          .select('*')
           .eq('room_id', selectedRoomId)
           .order('created_at', { ascending: true });
 
-        if (error) throw error;
+        if (error) {
+          console.error('Supabase error details:', error);
+          throw error;
+        }
         
+        console.log('Messages fetched successfully:', data?.length || 0);
         setMessages(data || []);
       } catch (err) {
         console.error('Error fetching messages:', err);
+        console.error('Error type:', typeof err);
+        console.error('Error keys:', Object.keys(err || {}));
+        if (err && typeof err === 'object') {
+          console.error('Error message:', (err as Error).message);
+          console.error('Error code:', (err as any).code);
+          console.error('Error details:', (err as any).details);
+          console.error('Error hint:', (err as any).hint);
+        }
         setError('Failed to load messages');
       }
     };
@@ -168,10 +195,18 @@ export default function ChatSessionPage() {
           filter: `room_id=eq.${selectedRoomId}`,
         },
         (payload) => {
+          console.log('New message received:', payload.new);
           setMessages((prev) => [...prev, payload.new as Message]);
         }
       )
-      .subscribe();
+      .subscribe((status) => {
+        console.log('Realtime subscription status:', status);
+        if (status === 'SUBSCRIBED') {
+          console.log('Successfully subscribed to room messages');
+        } else if (status === 'CHANNEL_ERROR') {
+          console.error('Error subscribing to room messages');
+        }
+      });
 
     channelRef.current = channel;
 
@@ -338,7 +373,8 @@ export default function ChatSessionPage() {
   // Convert messages to the format expected by ChatArea
   const formattedMessages: FormattedMessage[] = messages.map((msg) => ({
     id: msg.id,
-    user: msg.profiles?.display_name || msg.profiles?.username || 'Anonymous',
+    // Since we're not joining with profiles, we'll use a generic name
+    user: 'User', // We could improve this by fetching user info separately if needed
     text: msg.content,
     time: new Date(msg.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
     self: msg.sender_id === session?.user.id,

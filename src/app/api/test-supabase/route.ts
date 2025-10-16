@@ -4,9 +4,10 @@ import { supabase } from '@/lib/supabaseClient';
 export async function GET() {
   try {
     // Test Supabase connection by querying the rooms table
-    const { data, error, count } = await supabase
+    const { data, error } = await supabase
       .from('rooms')
-      .select('count()', { count: 'exact' });
+      .select('id, name')
+      .limit(1);
 
     if (error) {
       console.error('Supabase error:', error);
@@ -20,7 +21,7 @@ export async function GET() {
     return NextResponse.json({ 
       success: true, 
       message: 'Supabase connection successful',
-      count: count
+      roomCount: data?.length || 0
     });
   } catch (error) {
     console.error('Unexpected error:', error);

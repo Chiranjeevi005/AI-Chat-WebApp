@@ -1,5 +1,5 @@
 // Script to set up the initial database schema
-require('dotenv').config({ path: '.env.local' });
+require('dotenv').config({ path: '.env' });
 
 // Use the service role key for server-side operations
 const { createClient } = require('@supabase/supabase-js');

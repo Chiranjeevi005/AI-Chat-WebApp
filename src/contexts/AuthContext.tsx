@@ -14,6 +14,7 @@ interface AuthContextType {
   signInWithOAuth: (provider: 'google') => Promise<any | null>;
   signOut: () => Promise<void>;
   resetError: () => void;
+  verifyEmail: (email: string, token: string, type: 'signup' | 'magiclink' | 'recovery' | 'invite') => Promise<any | null>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);

@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Supabase Debug</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+<body class="bg-gray-900 text-white p-8">
+    <h1 class="text-3xl font-bold mb-6">Supabase Debug</h1>
+    
+    <div id="results" class="bg-gray-800 rounded-lg p-6 max-w-2xl">
+        <p class="text-gray-400">Testing Supabase connection...</p>
+    </div>
+
+    <script>
+        // Test Supabase connection
+        const supabaseUrl = 'https://iyqtfhvuuesdzpsbnxad.supabase.co';
+        const supabaseAnonKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Iml5cXRmaHZ1dWVzZHpwc2JueGFkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjAzOTU5MzksImV4cCI6MjA3NTk3MTkzOX0.sxQNeWpjaVIbRHA16zaskb7bl7MnnuN6XZXs9MkzkJY';
+        
+        const supabase = supabase.createClient(supabaseUrl, supabaseAnonKey);
+        
+        async function testConnection() {
+            const resultsDiv = document.getElementById('results');
+            
+            try {
+                resultsDiv.innerHTML = '<p class="text-gray-400">Fetching rooms...</p>';
+                
+                const { data, error, count } = await supabase
+                    .from('rooms')
+                    .select('*', { count: 'exact' });
+                
+                if (error) {
+                    resultsDiv.innerHTML = `
+                        <div class="text-red-400">
+                            <h2 class="text-xl font-bold mb-2">Error</h2>
+                            <p><strong>Message:</strong> ${error.message}</p>
+                            <p><strong>Code:</strong> ${error.code}</p>
+                            <p><strong>Details:</strong> ${error.details || 'N/A'}</p>
+                            <p><strong>Hint:</strong> ${error.hint || 'N/A'}</p>
+                        </div>
+                    `;
+                    return;
+                }
+                
+                resultsDiv.innerHTML = `
+                    <div class="text-green-400">
+                        <h2 class="text-xl font-bold mb-2">Success</h2>
+                        <p><strong>Rooms count:</strong> ${count}</p>
+                        <p><strong>First room:</strong> ${data?.[0]?.name || 'N/A'}</p>
+                    </div>
+                `;
+            } catch (err) {
+                resultsDiv.innerHTML = `
+                    <div class="text-red-400">
+                        <h2 class="text-xl font-bold mb-2">Unexpected Error</h2>
+                        <p><strong>Message:</strong> ${err.message}</p>
+                        <p><strong>Type:</strong> ${typeof err}</p>
+                    </div>
+                `;
+            }
+        }
+        
+        testConnection();
+    </script>
+</body>
+</html>

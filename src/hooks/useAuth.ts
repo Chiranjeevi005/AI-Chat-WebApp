@@ -23,6 +23,7 @@ interface AuthHook {
   signInWithOAuth: (provider: 'google') => Promise<any>;
   signOut: () => Promise<void>;
   resetError: () => void;
+  verifyEmail: (email: string, token: string, type: 'signup' | 'magiclink' | 'recovery' | 'invite') => Promise<any>;
 }
 
 /**
@@ -136,7 +137,7 @@ export function useAuth(): AuthHook {
           data: {
             username: options?.username
           },
-          emailRedirectTo: `${window.location.origin}/auth/verify-email`
+          emailRedirectTo: `${window.location.origin}/auth/callback`
         }
       });
 
@@ -197,6 +198,27 @@ export function useAuth(): AuthHook {
     }
   }, []);
 
+  // Verify email with token
+  const verifyEmail = useCallback(async (email: string, token: string, type: 'signup' | 'magiclink' | 'recovery' | 'invite' = 'signup') => {
+    try {
+      setAuthState(prev => ({ ...prev, loading: true, error: null }));
+      
+      const { data, error } = await supabase.auth.verifyOtp({
+        email,
+        token,
+        type
+      });
+
+      if (error) throw error;
+      
+      return data;
+    } catch (error: any) {
+      const errorMessage = error.message || 'Failed to verify email';
+      setAuthState(prev => ({ ...prev, error: errorMessage, loading: false }));
+      throw error;
+    }
+  }, []);
+
   // Sign out
   const signOut = useCallback(async () => {
     try {
@@ -234,6 +256,7 @@ export function useAuth(): AuthHook {
     signInWithPassword,
     signInWithOAuth,
     signOut,
-    resetError
+    resetError,
+    verifyEmail
   };
 }

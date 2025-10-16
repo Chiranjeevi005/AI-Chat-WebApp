@@ -9,10 +9,25 @@ export default function OAuthCallbackPage() {
   const searchParams = useSearchParams();
 
   useEffect(() => {
-    // Handle OAuth callback
+    // Handle OAuth callback and email verification
     const handleCallback = async () => {
       try {
-        // Get the current session - Supabase will automatically handle the OAuth tokens
+        // Check if this is an email verification callback
+        const token = searchParams.get('token');
+        const email = searchParams.get('email');
+        const type = searchParams.get('type');
+
+        if (token && email && type) {
+          // This is an email verification callback
+          // Supabase will automatically handle the verification
+          // We just need to redirect after a short delay to allow the verification to complete
+          setTimeout(() => {
+            router.push('/chat-session');
+          }, 2000);
+          return;
+        }
+
+        // Handle OAuth callback
         const { data, error } = await supabase.auth.getSession();
         
         if (error) {
@@ -32,8 +47,8 @@ export default function OAuthCallbackPage() {
           router.push('/auth/login?error=authentication_failed');
         }
       } catch (err) {
-        console.error('Error in OAuth callback:', err);
-        router.push('/auth/login?error=oauth_callback_failed');
+        console.error('Error in callback:', err);
+        router.push('/auth/login?error=callback_failed');
       }
     };
 
