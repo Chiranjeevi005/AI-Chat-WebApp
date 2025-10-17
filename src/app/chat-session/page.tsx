@@ -502,7 +502,7 @@ export default function ChatSessionPage() {
   }, [sendMessage]);
 
   // Debounce function
-  function debounce(func: Function, wait: number) {
+  function debounce<T extends (...args: any[]) => any>(func: T, wait: number) {
     let timeout: NodeJS.Timeout;
     return function executedFunction(...args: any[]) {
       const later = () => {

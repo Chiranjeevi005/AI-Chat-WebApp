@@ -168,12 +168,12 @@ export default function Home() {
     // Start the direct transition animation
     startDirectTransition();
   };
-  
+
   const startDirectTransition = () => {
     // Immediately start the immersive animation without showing button loader
     startImmersiveAnimation();
   };
-  
+
   const startImmersiveAnimation = () => {
     setIsLoading(true);
     
@@ -236,123 +236,28 @@ export default function Home() {
       });
     }
     
-    // Container animation with smoother transition
+    // Container animation with the ORIGINAL zoom effect from commit 7dbce50
     if (containerRef.current) {
       gsap.to(containerRef.current, {
-        scale: 0.95,
-        opacity: 0.2,
+        scale: 3,  // This is the key animation from the original commit
+        opacity: 0,
         duration: 1,
         ease: 'power2.inOut',
         onComplete: () => {
-          // Create enhanced tunnel effect
-          createEnhancedTunnelEffect();
+          // Navigate to chat session after animation
+          router.push('/chat-session');
         }
       });
     }
-  };
-  
-  const createParticleExplosion = () => {
-    // Create additional visual effects
-    const explosionContainer = document.createElement('div');
-    explosionContainer.className = 'absolute inset-0 overflow-hidden pointer-events-none';
-    explosionContainer.style.zIndex = '100';
-    document.body.appendChild(explosionContainer);
-    
-    // Create explosion particles with more variation
-    for (let i = 0; i < 50; i++) {
-      const particle = document.createElement('div');
-      particle.className = 'absolute rounded-full';
-      const size = Math.random() * 6 + 2;
-      particle.style.width = `${size}px`;
-      particle.style.height = `${size}px`;
-      particle.style.backgroundColor = i % 3 === 0 ? '#00ffff' : i % 3 === 1 ? '#8243cc' : '#ff7a00';
-      particle.style.left = '50%';
-      particle.style.top = '50%';
-      particle.style.opacity = '0';
-      particle.style.transform = 'translate(-50%, -50%)';
-      particle.style.boxShadow = `0 0 ${size}px ${i % 3 === 0 ? '#00ffff' : i % 3 === 1 ? '#8243cc' : '#ff7a00'}`;
-      explosionContainer.appendChild(particle);
-      
-      // Animate each particle with keyframes using GSAP's keyframes
-      gsap.to(particle, {
-        duration: 1,
-        keyframes: [
-          { x: 0, y: 0, opacity: 0, scale: 0 },
-          { x: (Math.random() - 0.5) * 300, y: (Math.random() - 0.5) * 300, opacity: 0.7, scale: 1, ease: 'power2.out' },
-          { x: (Math.random() - 0.5) * 600, y: (Math.random() - 0.5) * 600, opacity: 0, scale: 0, ease: 'power2.in' }
-        ]
-      });
-    }
-    
-    // Remove container after animation
-    setTimeout(() => {
-      explosionContainer.remove();
-    }, 1200);
-  };
-  
-  const createEnhancedTunnelEffect = () => {
-    // Create multiple tunnel layers for depth effect
-    const tunnelLayers = [];
-    for (let i = 0; i < 4; i++) {
-      const tunnel = document.createElement('div');
-      tunnel.className = 'fixed inset-0 z-50 pointer-events-none';
-      tunnel.style.background = `radial-gradient(circle, rgba(13,13,13,0) ${60 + i * 5}%, rgba(13,13,13,${0.4 + i * 0.1}) 100%)`;
-      tunnel.style.opacity = '0';
-      tunnel.style.transform = `scale(${1 + i * 0.1})`;
-      document.body.appendChild(tunnel);
-      tunnelLayers.push(tunnel);
-    }
-    
-    // Animate tunnel layers with staggered timing
-    tunnelLayers.forEach((tunnel, index) => {
-      gsap.to(tunnel, {
-        duration: 1.2,
-        delay: index * 0.08,
-        keyframes: [
-          { opacity: 0, scale: 1 + index * 0.1 },
-          { opacity: 0.7, scale: 1.1 + index * 0.2, ease: 'power2.out' },
-          { opacity: 0, scale: 1.3 + index * 0.2, ease: 'power2.in' }
-        ]
-      });
-    });
-    
-    // Navigate to chat session with enhanced blackout effect
-    setTimeout(() => {
-      // Create a more dramatic blackout transition
-      const blackoutOverlay = document.createElement('div');
-      blackoutOverlay.id = 'blackout-overlay';
-      blackoutOverlay.className = 'fixed inset-0 z-[1000] bg-black pointer-events-none';
-      blackoutOverlay.style.opacity = '0';
-      document.body.appendChild(blackoutOverlay);
-      
-      // Animate the blackout with a smooth build-up
-      gsap.to(blackoutOverlay, {
-        duration: 1,
-        keyframes: [
-          { opacity: 0 },
-          { opacity: 0.2, ease: 'power1.out' },
-          { opacity: 0.6, ease: 'power2.out' },
-          { opacity: 1, ease: 'power3.inOut' }
-        ],
-        onComplete: () => {
-          // Add a subtle pulse effect before navigation
-          setTimeout(() => {
-            gsap.to(blackoutOverlay, {
-              duration: 0.2,
-              keyframes: [
-                { opacity: 1 },
-                { opacity: 0.95 },
-                { opacity: 1 }
-              ],
-              onComplete: () => {
-                window.location.href = '/chat-session';
-              }
-            });
-          }, 80);
-        }
-      });
-    }, 600);
-  };
+};
+
+const createParticleExplosion = () => {
+  // This function is not needed for the original animation
+};
+
+const createEnhancedTunnelEffect = () => {
+  // This function is not needed for the original animation
+};
 
   return (
     <div 

@@ -79,7 +79,8 @@ export async function seedRooms() {
     
     // Insert initial rooms
     const roomsToInsert = initialRooms.map((room) => ({
-      name: room.name
+      name: room.name,
+      description: room.description
       // We'll set created_by to null for now since we don't have a user
       // In a real scenario, you'd want to associate this with an admin user
     }));

@@ -11,7 +11,6 @@ interface AuthContextType {
   isAuthenticated: boolean;
   signUp: (email: string, password: string, options?: { username?: string }) => Promise<any | null>;
   signInWithPassword: (email: string, password: string) => Promise<any | null>;
-  signInWithOAuth: (provider: 'google') => Promise<any | null>;
   signOut: () => Promise<void>;
   resetError: () => void;
   verifyEmail: (email: string, token: string, type: 'signup' | 'magiclink' | 'recovery' | 'invite') => Promise<any | null>;

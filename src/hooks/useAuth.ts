@@ -20,7 +20,6 @@ interface AuthHook {
   isAuthenticated: boolean;
   signUp: (email: string, password: string, options?: { username?: string }) => Promise<any>;
   signInWithPassword: (email: string, password: string) => Promise<any>;
-  signInWithOAuth: (provider: 'google', redirectUrl?: string) => Promise<any>;
   signOut: () => Promise<void>;
   resetError: () => void;
   verifyEmail: (email: string, token: string, type: 'signup' | 'magiclink' | 'recovery' | 'invite') => Promise<any>;
@@ -28,8 +27,8 @@ interface AuthHook {
 
 /**
  * Custom hook for authentication management
- * Provides a complete authentication solution with session management,
- * OAuth integration, and error handling
+ * Provides a complete authentication solution with session management
+ * and error handling
  */
 export function useAuth(): AuthHook {
   const [authState, setAuthState] = useState<AuthState>({
@@ -249,33 +248,6 @@ export function useAuth(): AuthHook {
     }
   }, [ensureUserProfile]);
 
-  // Sign in with OAuth provider
-  const signInWithOAuth = useCallback(async (provider: 'google', redirectUrl?: string) => {
-    try {
-      setAuthState(prev => ({ ...prev, loading: true, error: null }));
-      
-      // Ensure router is initialized before proceeding
-      if (!isRouterInitialized.current) {
-        throw new Error('Navigation is not available at the moment. Please try again.');
-      }
-      
-      const { data, error } = await supabase.auth.signInWithOAuth({
-        provider,
-        options: {
-          redirectTo: `${window.location.origin}/auth/callback?redirect=${redirectUrl || '/chat-session'}`
-        }
-      });
-
-      if (error) throw error;
-      
-      return data;
-    } catch (error: any) {
-      const errorMessage = error.message || `Failed to sign in with ${provider}`;
-      setAuthState(prev => ({ ...prev, error: errorMessage, loading: false }));
-      throw error;
-    }
-  }, []);
-
   // Verify email with token
   const verifyEmail = useCallback(async (email: string, token: string, type: 'signup' | 'magiclink' | 'recovery' | 'invite' = 'signup') => {
     try {
@@ -344,7 +316,6 @@ export function useAuth(): AuthHook {
     isAuthenticated,
     signUp,
     signInWithPassword,
-    signInWithOAuth,
     signOut,
     resetError,
     verifyEmail

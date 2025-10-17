@@ -4,15 +4,12 @@
   "private": true,
   "scripts": {
     "dev": "next dev -p 3003",
-    "build": "next build --turbopack",
-    "start": "NODE_ENV=production PORT=3003 node server.js",
+    "build": "next build",
+    "start": "NODE_ENV=production node server.js",
     "lint": "eslint",
     "setup-db": "node scripts/setup-database.js",
-    "create-tables": "node scripts/create-tables.js",
     "seed": "node scripts/seed-rooms.js",
-    "update-schema": "node update-database-schema.js",
-    "create-missing-tables": "node scripts/create-missing-tables.js",
-    "setup-admin": "node scripts/create-admin-user.js",
+    "vercel-setup": "node scripts/vercel-setup.js",
     "test": "jest"
   },
   "dependencies": {
@@ -46,6 +43,7 @@
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "@vitejs/plugin-react": "^4.2.1",
+    "babel-plugin-react-compiler": "^1.0.0",
     "dotenv": "^17.2.3",
     "eslint": "^9",
     "eslint-config-next": "15.5.2",

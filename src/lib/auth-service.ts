@@ -2,6 +2,7 @@ import { createServerClient } from '@supabase/ssr';
 import { cookies } from 'next/headers';
 import { redirect } from 'next/navigation';
 import { cache } from 'react';
+import { createSupabaseClient } from '@/lib/supabaseClient';
 
 /**
  * Server-side Supabase client creation
@@ -9,6 +10,7 @@ import { cache } from 'react';
  * with proper cookie handling for session management
  */
 export function createClient() {
+  // Get cookies synchronously - this works in server components
   const cookieStore: any = cookies();
 
   return createServerClient(
@@ -22,6 +24,40 @@ export function createClient() {
         setAll(cookiesToSet: any) {
           try {
             cookiesToSet.forEach(({ name, value, options }: any) =>
+              cookieStore.set(name, value, options)
+            );
+          } catch {
+            // The `setAll` method was called from a Server Component.
+            // This can be ignored if you have middleware refreshing
+            // user sessions.
+          }
+        },
+      },
+    }
+  );
+}
+
+/**
+ * Async server-side Supabase client creation
+ * This function creates a Supabase client for server-side operations
+ * with proper async cookie handling for session management
+ * Use this in route handlers where cookies need to be awaited
+ */
+export async function createAsyncClient() {
+  // Get cookies asynchronously - this works in route handlers
+  const cookieStore = await cookies();
+
+  return createServerClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+    {
+      cookies: {
+        getAll() {
+          return cookieStore.getAll();
+        },
+        setAll(cookiesToSet) {
+          try {
+            cookiesToSet.forEach(({ name, value, options }) =>
               cookieStore.set(name, value, options)
             );
           } catch {

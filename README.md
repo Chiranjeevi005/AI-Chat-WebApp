@@ -8,7 +8,7 @@ A cutting-edge chat application with a futuristic dark-themed UI, 3D elements, a
 - 🎨 **3D Interactive Elements**: React Three Fiber powered 3D logo and components
 - ✨ **Smooth Animations**: GSAP-powered transitions and micro-interactions
 - 💬 **Real-time Chat Interface**: Fully functional chat UI with responsive design
-- 🔐 **Secure Authentication**: Complete authentication system with email/password and OAuth
+- 🔐 **Secure Authentication**: Complete authentication system with email/password
 - 📱 **Mobile Responsive**: Optimized for all device sizes
 - 🔥 **Modern UI Components**: Glassmorphism cards, gradient text, and glow effects
 
@@ -47,7 +47,6 @@ src/
 This application includes a comprehensive authentication system with:
 
 - **Email/Password Authentication**: Traditional username/password login
-- **OAuth Integration**: Google login option
 - **Session Management**: Secure session handling with automatic refresh
 - **Protected Routes**: Middleware-based route protection
 - **API Security**: JWT-based API endpoint protection
@@ -100,17 +99,27 @@ SUPABASE_SERVICE_ROLE_KEY=your_supabase_service_role_key
 NEXT_PUBLIC_APP_URL=http://localhost:3003
 ```
 
-### 4. Set up the admin user:
+### 4. Set up the database schema:
+```bash
+node scripts/setup-database.js
+```
+
+### 5. Seed initial chat rooms:
+```bash
+npm run seed
+```
+
+### 6. Set up the admin user:
 ```bash
 node scripts/create-admin-user.js
 ```
 
-### 5. Run the development server:
+### 7. Run the development server:
 ```bash
 npm run dev
 ```
 
-### 6. Visit `http://localhost:3003` to view the application
+### 8. Visit `http://localhost:3003` to view the application
 
 ## Available Scripts
 
@@ -118,6 +127,22 @@ npm run dev
 - `npm run build` - Builds the application for production
 - `npm start` - Starts the production server
 - `npm run lint` - Runs the linter
+
+## Vercel Deployment
+
+This application is configured for deployment to Vercel. Follow these steps:
+
+1. Push your code to a GitHub repository
+2. Create a new project on Vercel
+3. Connect your GitHub repository
+4. Configure the environment variables in Vercel:
+   - `NEXT_PUBLIC_SUPABASE_URL`
+   - `NEXT_PUBLIC_SUPABASE_ANON_KEY`
+   - `SUPABASE_SERVICE_ROLE_KEY`
+   - `NEXT_PUBLIC_APP_URL` (set to your Vercel deployment URL)
+5. Deploy the project
+
+The application will automatically build and deploy. No additional configuration is needed.
 
 ## Security Features
 
