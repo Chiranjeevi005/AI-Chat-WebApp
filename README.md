@@ -9,6 +9,7 @@ A cutting-edge chat application with a futuristic dark-themed UI, 3D elements, a
 - ✨ **Smooth Animations**: GSAP-powered transitions and micro-interactions
 - 💬 **Real-time Chat Interface**: Fully functional chat UI with responsive design
 - 🔐 **Secure Authentication**: Complete authentication system with email/password
+- 🔑 **Password Reset**: Forgot password functionality with email verification
 - 📱 **Mobile Responsive**: Optimized for all device sizes
 - 🔥 **Modern UI Components**: Glassmorphism cards, gradient text, and glow effects
 
@@ -47,6 +48,7 @@ src/
 This application includes a comprehensive authentication system with:
 
 - **Email/Password Authentication**: Traditional username/password login
+- **Password Reset**: Forgot password functionality with email verification
 - **Session Management**: Secure session handling with automatic refresh
 - **Protected Routes**: Middleware-based route protection
 - **API Security**: JWT-based API endpoint protection
@@ -143,6 +145,20 @@ This application is configured for deployment to Vercel. Follow these steps:
 5. Deploy the project
 
 The application will automatically build and deploy. No additional configuration is needed.
+
+## Password Reset Functionality
+
+This application includes a complete password reset system:
+
+1. Users can request a password reset from the login page
+2. An email with a secure reset link is sent to the user
+3. Users click the link to access the password update page
+4. After updating their password, users are redirected to the login page
+
+The password reset flow includes:
+- `/auth/forgot-password` - Request password reset
+- `/auth/update-password` - Update password form
+- Email verification through Supabase
 
 ## Security Features
 
