@@ -78,18 +78,7 @@ export default function LoginPage() {
 
     try {
       await signInWithPassword(email, password);
-      // The redirect will be handled by the auth hook and the useEffect above
-      // Add a small delay to ensure state updates properly
-      setTimeout(() => {
-        if (isAuthenticated && user) {
-          const redirect = searchParamsRef.current?.get('redirect');
-          if (user.email === 'chiranjeevi8050@gmail.com') {
-            router.push(redirect || '/admin');
-          } else {
-            router.push(redirect || '/chat-session');
-          }
-        }
-      }, 300);
+      // The redirect is now handled in the signInWithPassword function
     } catch (err: unknown) {
       console.error('Login error:', err);
       // Provide more user-friendly error messages

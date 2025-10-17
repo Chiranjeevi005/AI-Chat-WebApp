@@ -240,13 +240,31 @@ export function useAuth(): AuthHook {
         loading: false 
       }));
       
+      // Handle redirect after successful login
+      if (typeof window !== 'undefined' && data?.user) {
+        // Check for redirect parameter in URL
+        const urlParams = new URLSearchParams(window.location.search);
+        const redirect = urlParams.get('redirect');
+        
+        // Use setTimeout to ensure state updates are processed
+        setTimeout(() => {
+          if (redirect) {
+            router.push(redirect);
+          } else if (data.user.email === 'chiranjeevi8050@gmail.com') {
+            router.push('/admin');
+          } else {
+            router.push('/chat-session');
+          }
+        }, 100);
+      }
+      
       return data;
     } catch (error: any) {
       const errorMessage = error.message || 'Failed to sign in';
       setAuthState(prev => ({ ...prev, error: errorMessage, loading: false }));
       throw error;
     }
-  }, [ensureUserProfile]);
+  }, [ensureUserProfile, router]);
 
   // Verify email with token
   const verifyEmail = useCallback(async (email: string, token: string, type: 'signup' | 'magiclink' | 'recovery' | 'invite' = 'signup') => {

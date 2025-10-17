@@ -120,6 +120,8 @@ export async function authMiddleware(request: NextRequest) {
     if (redirect) {
       // If there's a redirect parameter, use it
       url.pathname = redirect;
+      // Clear the search params to avoid infinite loops
+      url.search = '';
       return NextResponse.redirect(url);
     } else {
       // No redirect parameter, check if user is admin
@@ -130,6 +132,8 @@ export async function authMiddleware(request: NextRequest) {
         // Regular user goes to chat session
         url.pathname = '/chat-session';
       }
+      // Clear the search params to avoid infinite loops
+      url.search = '';
       return NextResponse.redirect(url);
     }
   }
