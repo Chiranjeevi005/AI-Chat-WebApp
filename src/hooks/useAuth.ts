@@ -78,6 +78,12 @@ export function useAuth(): AuthHook {
 
         if (insertProfileError) {
           console.error('Error creating user profile:', insertProfileError);
+          console.error('Detailed error info:', {
+            message: insertProfileError.message,
+            code: insertProfileError.code,
+            details: insertProfileError.details,
+            hint: insertProfileError.hint
+          });
         }
       } else {
         // If profile exists, check if it should be admin
@@ -115,11 +121,24 @@ export function useAuth(): AuthHook {
         }));
       } catch (error) {
         console.error('Error checking session:', error);
-        setAuthState(prev => ({
-          ...prev,
-          loading: false,
-          error: 'Failed to check authentication status'
-        }));
+        // Handle refresh token errors specifically
+        if (error instanceof Error && error.message.includes('Refresh Token')) {
+          // Clear local storage and sign out
+          await supabase.auth.signOut();
+          setAuthState(prev => ({
+            ...prev,
+            user: null,
+            session: null,
+            loading: false,
+            error: 'Session expired. Please sign in again.'
+          }));
+        } else {
+          setAuthState(prev => ({
+            ...prev,
+            loading: false,
+            error: 'Failed to check authentication status'
+          }));
+        }
       }
     };
 
@@ -128,6 +147,25 @@ export function useAuth(): AuthHook {
     // Listen for auth state changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (_event, session) => {
+        // Handle auth errors
+        if (_event === 'SIGNED_OUT' || !session) {
+          // User logged out or session invalid
+          setAuthState(prev => ({
+            ...prev,
+            user: null,
+            session: null,
+            loading: false
+          }));
+          
+          if (typeof window !== 'undefined' && routerRef.current) {
+            const currentPath = window.location.pathname;
+            if (currentPath.startsWith('/chat-session') || currentPath.startsWith('/profile') || currentPath.startsWith('/admin')) {
+              routerRef.current.push('/auth/login');
+            }
+          }
+          return;
+        }
+        
         if (session?.user) {
           // Ensure user profile exists
           await ensureUserProfile(session.user);
@@ -145,17 +183,6 @@ export function useAuth(): AuthHook {
           // User logged in - let the login page handle the redirect
           // The login page has more context about the user's intent
           return;
-        }
-        
-        // Handle logout events
-        if (_event === 'SIGNED_OUT') {
-          // User logged out
-          if (typeof window !== 'undefined' && routerRef.current) {
-            const currentPath = window.location.pathname;
-            if (currentPath.startsWith('/chat-session') || currentPath.startsWith('/profile') || currentPath.startsWith('/admin')) {
-              routerRef.current.push('/auth/login');
-            }
-          }
         }
       }
     );
@@ -217,6 +244,63 @@ export function useAuth(): AuthHook {
 
   // Sign in with email and password
   const signInWithPassword = useCallback(async (email: string, password: string) => {
+    // Demo credentials
+    const demoEmail = "project.evaluation@unifiedmentor.com";
+    const demoPassword = "DemoPassword123";
+    
+    // Check for demo credentials
+    if (email === demoEmail && password === demoPassword) {
+      try {
+        // For demo credentials, we'll create a temporary user that goes through the same flow
+        // Create a mock user that mimics a real Supabase user
+        const mockUser = {
+          id: 'demo-user-id',
+          email: demoEmail,
+          user_metadata: {
+            username: 'demo-user',
+            display_name: 'Demo User'
+          },
+          app_metadata: {},
+          aud: 'authenticated',
+          created_at: new Date().toISOString()
+        } as User;
+        
+        // Set auth state with mock data
+        setAuthState(prev => ({ 
+          ...prev, 
+          user: mockUser,
+          loading: false 
+        }));
+        
+        // Store demo flag in localStorage
+        if (typeof window !== 'undefined') {
+          localStorage.setItem('isDemoUser', 'true');
+        }
+        
+        // Handle redirect after successful login
+        if (typeof window !== 'undefined') {
+          // Check for redirect parameter in URL
+          const urlParams = new URLSearchParams(window.location.search);
+          const redirect = urlParams.get('redirect');
+          
+          // Use setTimeout to ensure state updates are processed
+          setTimeout(() => {
+            if (redirect) {
+              router.push(`${redirect}?demo=true`);
+            } else {
+              router.push('/chat-session?demo=true');
+            }
+          }, 100);
+        }
+        
+        return { user: mockUser };
+      } catch (error: any) {
+        const errorMessage = error.message || 'Failed to sign in as demo user';
+        setAuthState(prev => ({ ...prev, error: errorMessage, loading: false }));
+        throw error;
+      }
+    }
+    
     try {
       setAuthState(prev => ({ ...prev, loading: true, error: null }));
       
@@ -252,6 +336,8 @@ export function useAuth(): AuthHook {
             router.push(redirect);
           } else if (data.user.email === 'chiranjeevi8050@gmail.com') {
             router.push('/admin');
+          } else if (data.user.email === demoEmail) {
+            router.push('/chat-session?demo=true');
           } else {
             router.push('/chat-session');
           }
@@ -261,7 +347,12 @@ export function useAuth(): AuthHook {
       return data;
     } catch (error: any) {
       const errorMessage = error.message || 'Failed to sign in';
-      setAuthState(prev => ({ ...prev, error: errorMessage, loading: false }));
+      // Handle refresh token errors specifically
+      if (errorMessage.includes('Refresh Token')) {
+        setAuthState(prev => ({ ...prev, error: 'Session expired. Please sign in again.', loading: false }));
+      } else {
+        setAuthState(prev => ({ ...prev, error: errorMessage, loading: false }));
+      }
       throw error;
     }
   }, [ensureUserProfile, router]);
@@ -296,6 +387,11 @@ export function useAuth(): AuthHook {
   const signOut = useCallback(async () => {
     try {
       setAuthState(prev => ({ ...prev, loading: true, error: null }));
+      
+      // Clean up demo flag
+      if (typeof window !== 'undefined') {
+        localStorage.removeItem('isDemoUser');
+      }
       
       const { error } = await supabase.auth.signOut();
       

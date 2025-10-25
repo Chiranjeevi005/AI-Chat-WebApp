@@ -231,17 +231,32 @@ CREATE POLICY "room_members_delete" ON room_members
   );
 
 -- ==========================================
--- SECTION 5: AUTOMATION FUNCTIONS & TRIGGERS
+-- SECTION 5: RPC FUNCTIONS FOR DEMO USERS
+-- ==========================================
+
+-- Create a function that allows demo users to see all rooms
+CREATE OR REPLACE FUNCTION get_all_rooms_for_demo()
+RETURNS SETOF rooms AS $$
+BEGIN
+  RETURN QUERY SELECT * FROM rooms ORDER BY created_at ASC;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+-- Grant execute permission on the function to authenticated users
+GRANT EXECUTE ON FUNCTION get_all_rooms_for_demo() TO authenticated;
+
+-- ==========================================
+-- SECTION 6: AUTOMATION FUNCTIONS & TRIGGERS
 -- ==========================================
 
 -- ------------------------------------------
--- 5.1: REMOVE EXISTING FUNCTIONS & TRIGGERS
+-- 6.1: REMOVE EXISTING FUNCTIONS & TRIGGERS
 -- ------------------------------------------
 DROP FUNCTION IF EXISTS add_room_creator_as_member() CASCADE;
 DROP FUNCTION IF EXISTS add_message_sender_as_member() CASCADE;
 
 -- ------------------------------------------
--- 5.2: ROOM CREATOR AUTO-MEMBERSHIP FUNCTION
+-- 6.2: ROOM CREATOR AUTO-MEMBERSHIP FUNCTION
 -- ------------------------------------------
 -- Automatically adds room creator as a member when room is created
 CREATE OR REPLACE FUNCTION add_room_creator_as_member()
@@ -265,7 +280,7 @@ CREATE TRIGGER add_room_creator_as_member_trigger
   EXECUTE FUNCTION add_room_creator_as_member();
 
 -- ------------------------------------------
--- 5.3: MESSAGE SENDER AUTO-MEMBERSHIP FUNCTION
+-- 6.3: MESSAGE SENDER AUTO-MEMBERSHIP FUNCTION
 -- ------------------------------------------
 -- Automatically adds message sender as a room member when they send a message
 CREATE OR REPLACE FUNCTION add_message_sender_as_member()
@@ -289,7 +304,7 @@ CREATE TRIGGER add_message_sender_as_member_trigger
   EXECUTE FUNCTION add_message_sender_as_member();
 
 -- ==========================================
--- SECTION 6: PERMISSIONS & ACCESS CONTROL
+-- SECTION 7: PERMISSIONS & ACCESS CONTROL
 -- ==========================================
 
 -- Grant necessary permissions to authenticated users
@@ -300,7 +315,7 @@ GRANT ALL ON messages TO authenticated;
 GRANT ALL ON room_members TO authenticated;
 
 -- ==========================================
--- SECTION 7: SCHEMA REFRESH
+-- SECTION 8: SCHEMA REFRESH
 -- ==========================================
 
 -- Notify PostgREST to reload the schema
@@ -308,7 +323,7 @@ GRANT ALL ON room_members TO authenticated;
 NOTIFY pgrst, 'reload schema';
 
 -- ==========================================
--- SECTION 8: VALIDATION QUERIES
+-- SECTION 9: VALIDATION QUERIES
 -- ==========================================
 -- Run these queries to verify the setup was successful:
 
@@ -344,10 +359,10 @@ NOTIFY pgrst, 'reload schema';
 -- FROM pg_proc p 
 -- JOIN pg_namespace n ON p.pronamespace = n.oid 
 -- WHERE n.nspname = 'public' 
--- AND proname IN ('add_room_creator_as_member', 'add_message_sender_as_member');
+-- AND proname IN ('add_room_creator_as_member', 'add_message_sender_as_member', 'get_all_rooms_for_demo');
 
 -- ==========================================
--- SECTION 9: POLICY FIXES
+-- SECTION 10: POLICY FIXES
 -- ==========================================
 -- Fix for room_members_select policy to prevent infinite recursion
 -- This ensures users can only see their own room memberships

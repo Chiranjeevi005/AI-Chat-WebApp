@@ -14,10 +14,20 @@ export default function LoginPage() {
   const searchParamsRef = useRef<URLSearchParams | null>(null);
   const { signInWithPassword, isAuthenticated, user, resetError } = useAuthContext();
 
+  // Demo credentials (kept private in code, not exposed in UI)
+  const demoEmail = "project.evaluation@unifiedmentor.com";
+  const demoPassword = "DemoPassword123";
+
   // Initialize searchParamsRef after component mounts
   useEffect(() => {
     if (typeof window !== 'undefined') {
       searchParamsRef.current = new URLSearchParams(window.location.search);
+      
+      // Check for session expired message in URL
+      const sessionExpired = searchParamsRef.current.get('sessionExpired');
+      if (sessionExpired === 'true') {
+        setError('Your session has expired. Please sign in again.');
+      }
     }
   }, []);
 
@@ -42,6 +52,9 @@ export default function LoginPage() {
         // Special handling for admin user - check the authenticated user's email
         if (user.email === 'chiranjeevi8050@gmail.com') {
           router.push(redirect || '/admin');
+        } else if (user.email === demoEmail) {
+          // Demo user redirect with flag
+          router.push(redirect || '/chat-session?demo=true');
         } else {
           router.push(redirect || '/chat-session');
         }
@@ -49,7 +62,7 @@ export default function LoginPage() {
       
       return () => clearTimeout(timer);
     }
-  }, [isAuthenticated, user, router]);
+  }, [isAuthenticated, user, router, demoEmail]);
 
   // Validate email format
   const isValidEmail = (email: string) => {
@@ -85,6 +98,10 @@ export default function LoginPage() {
       if (err instanceof Error) {
         if (err.message.includes('Invalid login credentials')) {
           setError('Invalid email or password');
+        } else if (err.message.includes('Refresh Token')) {
+          setError('Session expired. Please sign in again.');
+          // Redirect to login with session expired flag
+          router.push('/auth/login?sessionExpired=true');
         } else {
           setError(err.message);
         }
@@ -125,6 +142,9 @@ export default function LoginPage() {
               required
             />
             <p className="text-gray-500 text-xs mt-1">Use the email you signed up with</p>
+            {email === demoEmail && (
+              <p className="text-cyan-400 text-xs mt-1">Demo account detected</p>
+            )}
           </div>
 
           <div className="mb-6">
@@ -140,6 +160,9 @@ export default function LoginPage() {
               placeholder="••••••••"
               required
             />
+            {email === demoEmail && password === demoPassword && (
+              <p className="text-cyan-400 text-xs mt-1">Valid demo credentials - will bypass authentication</p>
+            )}
           </div>
 
           <button
@@ -163,6 +186,17 @@ export default function LoginPage() {
             <Link href="/auth/signup" className="text-cyan-400 hover:text-cyan-300">
               Sign up
             </Link>
+          </p>
+        </div>
+        
+        {/* Demo account information - removed sensitive credentials */}
+        <div className="mt-6 p-3 bg-blue-900/30 rounded-lg border border-blue-700/50">
+          <h3 className="text-blue-300 font-medium text-sm mb-1">Demo Account</h3>
+          <p className="text-blue-200 text-xs">
+            For evaluation purposes, a demo account is available.
+          </p>
+          <p className="text-blue-400 text-xs mt-2">
+            Contact the administrator for demo access credentials.
           </p>
         </div>
       </div>

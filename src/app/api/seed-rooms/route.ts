@@ -3,13 +3,13 @@ import { seedRooms } from '@/lib/seedRooms';
 
 export async function POST() {
   try {
-    // Only allow seeding in development environment
-    if (process.env.NODE_ENV !== 'development') {
-      return NextResponse.json({ 
-        success: false, 
-        message: 'Room seeding is only allowed in development environment' 
-      }, { status: 403 });
-    }
+    // Allow seeding in both development and production for demo purposes
+    // if (process.env.NODE_ENV !== 'development') {
+    //   return NextResponse.json({ 
+    //     success: false, 
+    //     message: 'Room seeding is only allowed in development environment' 
+    //   }, { status: 403 });
+    // }
 
     const result = await seedRooms();
     

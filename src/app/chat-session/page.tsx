@@ -1,7 +1,7 @@
 'use client';
 
-import { useState, useEffect, useRef, useCallback, useMemo } from 'react';
-import { useRouter } from 'next/navigation';
+import { useState, useEffect, useRef, useCallback, useMemo, Suspense } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { supabase } from '@/lib/supabaseClient';
 import { useAuthContext } from '@/contexts/AuthContext';
 import RoomSidebar from '@/app/components/chat/RoomSidebar';
@@ -40,7 +40,24 @@ interface FormattedMessage {
 }
 
 export default function ChatSessionPage() {
+  return (
+    <Suspense fallback={
+      <div className="h-screen w-full flex items-center justify-center bg-gradient-to-br from-gray-900 to-black">
+        <div className="text-center">
+          <div className="w-12 h-12 sm:w-16 sm:h-16 border-4 border-cyan-500 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+          <p className="text-gray-300 text-sm sm:text-base">Loading chat session...</p>
+          <p className="text-gray-500 text-xs sm:text-sm mt-2">Please wait while we connect you to the chat service</p>
+        </div>
+      </div>
+    }>
+      <ChatSessionContent />
+    </Suspense>
+  );
+}
+
+function ChatSessionContent() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const { user, session, loading: authLoading } = useAuthContext();
   const [rooms, setRooms] = useState<Room[]>([]);
   const [selectedRoomId, setSelectedRoomId] = useState<string | null>(null);
@@ -69,21 +86,56 @@ export default function ChatSessionPage() {
   const lastMessageCountRef = useRef(0);
   const loadingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
+  // Check if we're in demo mode
+  const isDemoMode = searchParams.get('demo') === 'true' || 
+                     user?.email === "project.evaluation@unifiedmentor.com" || 
+                     (typeof window !== 'undefined' && localStorage.getItem('isDemoUser') === 'true');
+  
+  console.log('Demo mode detection:', {
+    urlParam: searchParams.get('demo') === 'true',
+    userEmail: user?.email === "project.evaluation@unifiedmentor.com",
+    localStorage: typeof window !== 'undefined' && localStorage.getItem('isDemoUser') === 'true',
+    isDemoMode: isDemoMode
+  });
+
   // Authentication check
   useEffect(() => {
-    if (!authLoading && !session) {
-      router.push('/auth/login');
-    } else if (session && user) {
+    console.log('Authentication check:', {
+      authLoading,
+      session,
+      user,
+      isDemoMode
+    });
+    
+    if (!authLoading && !session && !isDemoMode) {
+      // Check if this is due to a refresh token error
+      const urlParams = new URLSearchParams(window.location.search);
+      const sessionExpired = urlParams.get('sessionExpired');
+      if (sessionExpired === 'true') {
+        router.push('/auth/login?sessionExpired=true');
+      } else {
+        router.push('/auth/login');
+      }
+    } else if ((session && user) || isDemoMode) {
+      console.log('Initializing user');
       initializeUser();
     }
-  }, [authLoading, session, user, router]);
+  }, [authLoading, session, user, router, isDemoMode]);
 
   // Initialize user data
   const initializeUser = useCallback(async () => {
-    if (!session) return;
+    if (!session && !isDemoMode) return;
     
     try {
-      // Fetch user role
+      // For demo users, set role to user and fetch all rooms
+      if (isDemoMode) {
+        console.log('Initializing demo user');
+        setUserRole('user');
+        await fetchRooms();
+        return;
+      }
+      
+      // Fetch user role for real users
       const { data: profileData, error: profileError } = await supabase
         .from('profiles')
         .select('role')
@@ -104,16 +156,21 @@ export default function ChatSessionPage() {
       if (savedRoomId) {
         setSelectedRoomId(savedRoomId);
       }
-    } catch (err) {
+    } catch (err: any) {
       console.error('Error initializing user:', err);
+      // Handle refresh token errors specifically
+      if (err.message && err.message.includes('Refresh Token')) {
+        router.push('/auth/login?sessionExpired=true');
+        return;
+      }
       setUserRole('user');
       await fetchRooms();
     }
-  }, [session]);
+  }, [session, isDemoMode, router]);
 
   // Fetch rooms with optimized approach
   const fetchRooms = useCallback(async () => {
-    if (!session) {
+    if (!session && !isDemoMode) {
       setLoading(false);
       return;
     }
@@ -131,7 +188,46 @@ export default function ChatSessionPage() {
         setLoading(false);
       }, 10000); // 10 second timeout
       
-      // Try to get rooms where user is a member
+      // For demo users, fetch all rooms
+      if (isDemoMode) {
+        console.log('Fetching rooms for demo user');
+        
+        // Use API endpoint to fetch all rooms for demo users
+        try {
+          const response = await fetch('/api/demo-rooms');
+          const result = await response.json();
+          
+          if (result.error) {
+            throw new Error(result.error);
+          }
+          
+          const roomsData = result.rooms;
+          console.log('Rooms data for demo user:', roomsData);
+
+          setRooms(roomsData || []);
+          console.log('Set rooms for demo user:', roomsData);
+          
+          // If no room is selected yet, select the first one
+          if (!selectedRoomId && roomsData && roomsData.length > 0) {
+            const savedRoomId = localStorage.getItem('activeRoom');
+            console.log('Saved room ID:', savedRoomId);
+            if (savedRoomId && roomsData.some((room: Room) => room.id === savedRoomId)) {
+              setSelectedRoomId(savedRoomId);
+              console.log('Selected saved room ID:', savedRoomId);
+            } else {
+              setSelectedRoomId(roomsData[0].id);
+              console.log('Selected first room ID:', roomsData[0].id);
+            }
+          }
+        } catch (fetchError) {
+          console.error('Error fetching rooms for demo user:', fetchError);
+          setError('Failed to load chat rooms. Please try again or contact an administrator.');
+        }
+        setLoading(false);
+        return;
+      }
+
+      // Try to get rooms where user is a member (real users)
       let userRooms = [];
       
       // Use room_members table (our schema)
@@ -236,8 +332,13 @@ export default function ChatSessionPage() {
         // If no rooms are available, clear any saved room
         localStorage.removeItem('activeRoom');
       }
-    } catch (err) {
+    } catch (err: any) {
       console.error('Error fetching rooms:', err);
+      // Handle refresh token errors specifically
+      if (err.message && err.message.includes('Refresh Token')) {
+        router.push('/auth/login?sessionExpired=true');
+        return;
+      }
       setError('Failed to load chat rooms. Please try again or contact an administrator.');
     } finally {
       setLoading(false);
@@ -245,10 +346,11 @@ export default function ChatSessionPage() {
         clearTimeout(loadingTimeoutRef.current);
       }
     }
-  }, [session, selectedRoomId]);
+  }, [session, selectedRoomId, isDemoMode, router]);
 
   // Update selected room and save to localStorage
   const handleRoomSelect = useCallback((roomId: string) => {
+    console.log('Selecting room:', roomId);
     setSelectedRoomId(roomId);
     localStorage.setItem('activeRoom', roomId);
     
@@ -269,7 +371,10 @@ export default function ChatSessionPage() {
 
   // Subscribe to rooms changes
   useEffect(() => {
-    if (!session) return;
+    if (!session && !isDemoMode) return;
+
+    // Skip for demo users
+    if (isDemoMode) return;
 
     const channel = supabase
       .channel('rooms-changes')
@@ -317,11 +422,11 @@ export default function ChatSessionPage() {
         supabase.removeChannel(roomsChannelRef.current);
       }
     };
-  }, [session]);
+  }, [session, isDemoMode]);
 
   // Fetch messages and subscribe to realtime updates
   useEffect(() => {
-    if (!session || !selectedRoomId) return;
+    if ((!session && !isDemoMode) || !selectedRoomId) return;
 
     const fetchAndSubscribe = async () => {
       // Save selected room to localStorage
@@ -329,6 +434,9 @@ export default function ChatSessionPage() {
       
       // Fetch initial messages
       await fetchMessages();
+      
+      // Skip subscription for demo users
+      if (isDemoMode) return;
       
       // Subscribe to new messages
       subscribeToMessages();
@@ -343,13 +451,64 @@ export default function ChatSessionPage() {
       if (channelRef.current) {
         supabase.removeChannel(channelRef.current);
       }
-      updateUserPresence(selectedRoomId, 'offline');
+      if (!isDemoMode && selectedRoomId) {
+        updateUserPresence(selectedRoomId, 'offline');
+      }
     };
-  }, [session, selectedRoomId]);
+  }, [session, selectedRoomId, isDemoMode]);
 
   // Fetch messages with pagination and caching
   const fetchMessages = useCallback(async () => {
-    if (!session || !selectedRoomId) return;
+    if ((!session && !isDemoMode) || !selectedRoomId) return;
+
+    // For demo users, create some simulated messages
+    if (isDemoMode) {
+      try {
+        // Create simulated messages for demo
+        const simulatedMessages: Message[] = [
+          {
+            id: 'demo-1',
+            room_id: selectedRoomId,
+            user_id: 'demo-user-1',
+            content: 'Welcome to the demo! This is a simulated message.',
+            created_at: new Date(Date.now() - 300000).toISOString(), // 5 minutes ago
+            profiles: {
+              username: 'Demo User 1',
+              display_name: 'Demo User 1'
+            }
+          },
+          {
+            id: 'demo-2',
+            room_id: selectedRoomId,
+            user_id: 'demo-user-2',
+            content: 'You can send messages in demo mode, but they won\'t be persisted.',
+            created_at: new Date(Date.now() - 120000).toISOString(), // 2 minutes ago
+            profiles: {
+              username: 'Demo User 2',
+              display_name: 'Demo User 2'
+            }
+          },
+          {
+            id: 'demo-3',
+            room_id: selectedRoomId,
+            user_id: 'demo-user-id',
+            content: 'Try sending a message to see how it works!',
+            created_at: new Date(Date.now() - 60000).toISOString(), // 1 minute ago
+            profiles: {
+              username: 'Demo User',
+              display_name: 'Demo User'
+            }
+          }
+        ];
+
+        setMessages(simulatedMessages);
+        setHasMoreMessages(false); // No more messages for demo
+      } catch (err: any) {
+        console.error('Error fetching messages for demo user:', err);
+        setError('Failed to load messages. Please try again.');
+      }
+      return;
+    }
 
     try {
       // Check if we have cached messages for this room
@@ -376,7 +535,7 @@ export default function ChatSessionPage() {
 
       if (error) throw error;
       
-      // Fetch user profiles in batch for better performance
+      // Fetch user profiles in batch for better performance (real users)
       const userIds = [...new Set(data.map(msg => msg.user_id))];
       const { data: profilesData, error: profilesError } = await supabase
         .from('profiles')
@@ -413,11 +572,16 @@ export default function ChatSessionPage() {
       }
       
       setHasMoreMessages(data.length === messagesLimit);
-    } catch (err) {
+    } catch (err: any) {
       console.error('Error fetching messages:', err);
+      // Handle refresh token errors specifically
+      if (err.message && err.message.includes('Refresh Token')) {
+        router.push('/auth/login?sessionExpired=true');
+        return;
+      }
       setError('Failed to load messages. Please try again.');
     }
-  }, [session, selectedRoomId, messagesOffset, messagesLimit]);
+  }, [session, selectedRoomId, messagesOffset, messagesLimit, isDemoMode, router]);
 
   // Clear message cache when switching rooms
   useEffect(() => {
@@ -429,7 +593,45 @@ export default function ChatSessionPage() {
 
   // Send a new message with instant feedback
   const sendMessage = useCallback(async () => {
-    if (!session || !selectedRoomId || !newMessage.trim()) return;
+    if ((!session && !isDemoMode) || !selectedRoomId || !newMessage.trim()) return;
+
+    // Allow demo users to send messages (but they won't be persisted)
+    if (isDemoMode) {
+      try {
+        setError(null);
+        
+        // Create temporary message for instant feedback
+        const tempMessage: Message = {
+          id: `temp-${Date.now()}`,
+          room_id: selectedRoomId,
+          user_id: 'demo-user-id',
+          content: newMessage.trim(),
+          created_at: new Date().toISOString(),
+          profiles: {
+            username: 'Demo User',
+            display_name: 'Demo User'
+          }
+        };
+
+        // Add to messages immediately for instant feedback
+        setMessages(prev => [...prev, tempMessage]);
+        setNewMessage('');
+
+        // Scroll to bottom immediately
+        setTimeout(() => {
+          if (messagesEndRef.current && chatContainerRef.current) {
+            chatContainerRef.current.scrollTop = chatContainerRef.current.scrollHeight;
+          }
+        }, 10);
+      } catch (err: any) {
+        console.error('Error sending message:', err);
+        setError('Failed to send message. Please try again.');
+        
+        // Remove temporary message on error
+        setMessages(prev => prev.filter(msg => !msg.id.startsWith('temp-')));
+      }
+      return;
+    }
 
     try {
       setError(null);
@@ -478,14 +680,19 @@ export default function ChatSessionPage() {
           )
         );
       }
-    } catch (err) {
+    } catch (err: any) {
       console.error('Error sending message:', err);
+      // Handle refresh token errors specifically
+      if (err.message && err.message.includes('Refresh Token')) {
+        router.push('/auth/login?sessionExpired=true');
+        return;
+      }
       setError('Failed to send message. Please try again.');
       
       // Remove temporary message on error
       setMessages(prev => prev.filter(msg => !msg.id.startsWith('temp-')));
     }
-  }, [session, selectedRoomId, newMessage, user]);
+  }, [session, selectedRoomId, newMessage, user, isDemoMode, router]);
 
   // Optimize message rendering with React.memo
   const optimizedMessages = useMemo(() => {
@@ -516,6 +723,9 @@ export default function ChatSessionPage() {
 
   // Subscribe to messages with optimized approach
   const subscribeToMessages = useCallback(() => {
+    // Skip subscription for demo users
+    if (isDemoMode) return;
+
     if (!session || !selectedRoomId) return;
 
     // Unsubscribe from previous channel
@@ -622,7 +832,7 @@ export default function ChatSessionPage() {
       });
 
     channelRef.current = channel;
-  }, [session, selectedRoomId]);
+  }, [session, selectedRoomId, isDemoMode]);
 
   // Process message queue for smooth updates
   const processMessageQueue = useCallback(() => {
@@ -684,6 +894,36 @@ export default function ChatSessionPage() {
 
   // Send typing indicator
   const sendTypingIndicator = useCallback(async (isTyping: boolean) => {
+    // Allow demo users to send typing indicators (but they won't be broadcasted)
+    if (isDemoMode) {
+      try {
+        // Update local typing state for demo user
+        if (isTyping) {
+          setTypingUsers(prev => {
+            if (!prev.includes('Demo User')) {
+              return [...prev, 'Demo User'];
+            }
+            return prev;
+          });
+          
+          // Clear typing status after 3 seconds
+          if (typingTimeoutRef.current) {
+            clearTimeout(typingTimeoutRef.current);
+          }
+          
+          typingTimeoutRef.current = setTimeout(() => {
+            setTypingUsers(prev => prev.filter(u => u !== 'Demo User'));
+          }, 3000);
+        } else {
+          // Remove user from typing list
+          setTypingUsers(prev => prev.filter(u => u !== 'Demo User'));
+        }
+      } catch (err: any) {
+        console.error('Error sending typing indicator:', err);
+      }
+      return;
+    }
+
     if (!session || !selectedRoomId || !channelRef.current) return;
 
     try {
@@ -702,14 +942,22 @@ export default function ChatSessionPage() {
           isTyping: isTyping
         }
       });
-    } catch (err) {
+    } catch (err: any) {
       console.error('Error sending typing indicator:', err);
+      // Handle refresh token errors specifically
+      if (err.message && err.message.includes('Refresh Token')) {
+        router.push('/auth/login?sessionExpired=true');
+        return;
+      }
     }
-  }, [session, selectedRoomId, user]);
+  }, [session, selectedRoomId, user, isDemoMode, router]);
 
   // Handle input change with typing indicator
   const handleInputChange = useCallback((e: React.ChangeEvent<HTMLTextAreaElement>) => {
     setNewMessage(e.target.value);
+    
+    // Skip for demo users
+    if (isDemoMode) return;
     
     // Send typing indicator
     if (e.target.value.trim()) {
@@ -726,10 +974,35 @@ export default function ChatSessionPage() {
     typingTimeoutRef.current = setTimeout(() => {
       sendTypingIndicator(false);
     }, 1000);
-  }, [setNewMessage, sendTypingIndicator]);
+  }, [setNewMessage, sendTypingIndicator, isDemoMode]);
 
   // Create a new room
   const createRoom = useCallback(async (roomName: string, roomDescription: string) => {
+    // Allow demo users to create rooms (but they won't be persisted)
+    if (isDemoMode) {
+      try {
+        setError(null);
+        
+        // Create a temporary room for instant feedback
+        const tempRoom: Room = {
+          id: `temp-${Date.now()}`,
+          name: roomName,
+          description: roomDescription,
+          created_at: new Date().toISOString(),
+          created_by: 'demo-user-id'
+        };
+
+        setRooms(prev => [...prev, tempRoom]);
+        setSelectedRoomId(tempRoom.id);
+        setSuccess('Room created successfully (demo mode - not persisted)');
+        setTimeout(() => setSuccess(null), 3000);
+      } catch (err: any) {
+        console.error('Error creating room:', err);
+        setError('Failed to create room. Please try again.');
+      }
+      return;
+    }
+
     if (!session) return;
 
     try {
@@ -754,14 +1027,39 @@ export default function ChatSessionPage() {
       setSelectedRoomId(result.room.id);
       setSuccess('Room created successfully');
       setTimeout(() => setSuccess(null), 3000);
-    } catch (err) {
+    } catch (err: any) {
       console.error('Error creating room:', err);
+      // Handle refresh token errors specifically
+      if (err.message && err.message.includes('Refresh Token')) {
+        router.push('/auth/login?sessionExpired=true');
+        return;
+      }
       setError('Failed to create room. Please try again.');
     }
-  }, [session]);
+  }, [session, isDemoMode, router]);
 
   // Delete a room
   const deleteRoom = useCallback(async (roomId: string) => {
+    // Allow demo users to delete rooms (but they won't be persisted)
+    if (isDemoMode) {
+      try {
+        setError(null);
+        
+        setRooms(prev => prev.filter(room => room.id !== roomId));
+        
+        if (selectedRoomId === roomId) {
+          setSelectedRoomId(rooms.length > 1 ? rooms[0].id : null);
+        }
+        
+        setSuccess('Room deleted successfully (demo mode - not persisted)');
+        setTimeout(() => setSuccess(null), 3000);
+      } catch (err: any) {
+        console.error('Error deleting room:', err);
+        setError('Failed to delete room. Please try again.');
+      }
+      return;
+    }
+
     if (!session) return;
 
     try {
@@ -790,14 +1088,34 @@ export default function ChatSessionPage() {
       
       setSuccess('Room deleted successfully');
       setTimeout(() => setSuccess(null), 3000);
-    } catch (err) {
+    } catch (err: any) {
       console.error('Error deleting room:', err);
+      // Handle refresh token errors specifically
+      if (err.message && err.message.includes('Refresh Token')) {
+        router.push('/auth/login?sessionExpired=true');
+        return;
+      }
       setError('Failed to delete room. Please try again.');
     }
-  }, [session, selectedRoomId, rooms]);
+  }, [session, selectedRoomId, rooms, isDemoMode, router]);
 
   // Delete a message
   const deleteMessage = useCallback(async (messageId: string) => {
+    // Allow demo users to delete messages (but they won't be persisted)
+    if (isDemoMode) {
+      try {
+        setError(null);
+        
+        setMessages(prev => prev.filter(msg => msg.id !== messageId));
+        setSuccess('Message deleted successfully (demo mode - not persisted)');
+        setTimeout(() => setSuccess(null), 3000);
+      } catch (err: any) {
+        console.error('Error deleting message:', err);
+        setError('Failed to delete message. Please try again.');
+      }
+      return;
+    }
+
     if (!session) return;
 
     try {
@@ -813,14 +1131,22 @@ export default function ChatSessionPage() {
       setMessages(prev => prev.filter(msg => msg.id !== messageId));
       setSuccess('Message deleted successfully');
       setTimeout(() => setSuccess(null), 3000);
-    } catch (err) {
+    } catch (err: any) {
       console.error('Error deleting message:', err);
+      // Handle refresh token errors specifically
+      if (err.message && err.message.includes('Refresh Token')) {
+        router.push('/auth/login?sessionExpired=true');
+        return;
+      }
       setError('Failed to delete message. Please try again.');
     }
-  }, [session]);
+  }, [session, isDemoMode, router]);
 
   // Update user presence with error handling
   const updateUserPresence = useCallback(async (roomId: string, status: 'online' | 'offline') => {
+    // Skip for demo users
+    if (isDemoMode) return;
+
     if (!session) return;
 
     try {
@@ -835,13 +1161,38 @@ export default function ChatSessionPage() {
           status
         }),
       });
-    } catch (err) {
+    } catch (err: any) {
+      console.error('Error updating presence:', err);
+      // Handle refresh token errors specifically
+      if (err.message && err.message.includes('Refresh Token')) {
+        router.push('/auth/login?sessionExpired=true');
+        return;
+      }
       // Silently ignore presence errors to prevent UI disruption
     }
-  }, [session]);
+  }, [session, isDemoMode, router]);
 
   // Handle logout
   const handleLogout = useCallback(async () => {
+    // Handle logout for demo users
+    if (isDemoMode) {
+      try {
+        setError(null);
+        
+        // Clean up demo flag
+        if (typeof window !== 'undefined') {
+          localStorage.removeItem('isDemoUser');
+        }
+        
+        setSuccess('Logged out successfully');
+        setTimeout(() => router.push('/auth/login'), 500);
+      } catch (err: any) {
+        console.error('Error signing out demo user:', err);
+        setError('Failed to sign out. Please try again.');
+      }
+      return;
+    }
+
     try {
       setError(null);
       
@@ -855,7 +1206,7 @@ export default function ChatSessionPage() {
       }
       
       // Update presence
-      if (selectedRoomId) {
+      if (selectedRoomId && !isDemoMode) {
         updateUserPresence(selectedRoomId, 'offline');
       }
       
@@ -866,11 +1217,16 @@ export default function ChatSessionPage() {
       
       setSuccess('Logged out successfully');
       setTimeout(() => router.push('/auth/login'), 500);
-    } catch (err) {
+    } catch (err: any) {
       console.error('Error signing out:', err);
+      // Handle refresh token errors specifically
+      if (err.message && err.message.includes('Refresh Token')) {
+        router.push('/auth/login?sessionExpired=true');
+        return;
+      }
       setError('Failed to sign out. Please try again.');
     }
-  }, [selectedRoomId, router]);
+  }, [selectedRoomId, router, isDemoMode]);
 
   // Convert messages to the format expected by ChatArea
   const formattedMessages: FormattedMessage[] = messages.map((msg) => ({
@@ -944,6 +1300,12 @@ export default function ChatSessionPage() {
 
   // No rooms state
   if (rooms.length === 0 && !loading) {
+    console.log('No rooms state:', {
+      roomsLength: rooms.length,
+      loading,
+      isDemoMode
+    });
+    
     return (
       <div 
         ref={pageRef}
@@ -982,6 +1344,16 @@ export default function ChatSessionPage() {
       ref={pageRef}
       className="h-screen w-full bg-gradient-to-br from-gray-900 to-black overflow-hidden flex flex-col"
     >
+      {/* Demo user banner */}
+      {isDemoMode && (
+        <div className="bg-yellow-900/50 border-b border-yellow-700/50 p-2 text-center">
+          <p className="text-yellow-200 text-sm">
+            <span className="font-bold">Demo Mode:</span> You are using a demo account with full functionality. 
+            All actions are simulated and will not be persisted. <a href="/auth/login" className="text-yellow-300 underline">Sign up for a real account</a> for persistent access.
+          </p>
+        </div>
+      )}
+      
       {/* Success notification */}
       {success && (
         <div className="fixed top-2 sm:top-4 right-2 sm:right-4 z-50 bg-green-600 text-white px-3 py-2 sm:px-4 sm:py-2 rounded-lg shadow-lg animate-fadeIn text-xs sm:text-sm">
@@ -1008,7 +1380,7 @@ export default function ChatSessionPage() {
           <RoomSidebar 
             sidebarOpen={sidebarOpen} 
             setSidebarOpen={setSidebarOpen}
-            sessionId={session?.user.id || 'guest'}
+            sessionId={session?.user?.id || user?.id || 'guest'}
             userRole={userRole}
             rooms={rooms}
             selectedRoomId={selectedRoomId}
